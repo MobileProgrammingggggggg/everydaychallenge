@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 // 홍우창
 //뇽안 깜비ㅎㅇㅎㅇㅎㄴ
 //gd3
+//만준이 안녕
 void main() {
   runApp(const MyApp());
 }
