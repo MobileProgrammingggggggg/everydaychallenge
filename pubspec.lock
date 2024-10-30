@@ -131,6 +131,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.15.0"
+  particle_field:
+    dependency: "direct main"
+    description:
+      name: particle_field
+      sha256: "9a5ebdde32751f82aba64198e9bbd46738e789e275bf9e7a88318ed460be560e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
   path:
     dependency: transitive
     description:
@@ -139,6 +147,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.9.0"
+  rnd:
+    dependency: "direct main"
+    description:
+      name: rnd
+      sha256: "87799a8c447da2e728096264b2cc13679a11af49f0504331f4d588986a371fcf"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
   sky_engine:
     dependency: transitive
     description: flutter
