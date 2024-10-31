@@ -15,12 +15,25 @@ class Roulette extends StatefulWidget {
   _RouletteState createState() => _RouletteState();
 }
 
-class _RouletteState extends State<Roulette> with SingleTickerProviderStateMixin {
+class _RouletteState extends State<Roulette>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   double _rotation = 0.0;
 
-  final List<String> items = ["물 2잔 마시기", "10키로 걷기", "2키로 뛰기", "숨 쉬기", "영단어 1개 암기"];
-  final List<Color> colors = [Colors.red, Colors.green, Colors.blue, Colors.yellow, Colors.orange];
+  final List<String> items = [
+    "물 2잔 마시기",
+    "10키로 걷기",
+    "2키로 뛰기",
+    "숨 쉬기",
+    "영단어 1개 암기"
+  ];
+  final List<Color> colors = [
+    Colors.red,
+    Colors.green,
+    Colors.blue,
+    Colors.yellow,
+    Colors.orange
+  ];
 
   @override
   void initState() {
@@ -39,7 +52,8 @@ class _RouletteState extends State<Roulette> with SingleTickerProviderStateMixin
     const double decelerationFactor = 0.2; // 감속 계수
     const int resultDelay = 300; // 결과 메시지 지연 시간 (밀리초)
 
-    final spins = Random().nextInt(maxSpins - minSpins + 1) + minSpins; // spins는 변위에서 랜덤
+    final spins =
+        Random().nextInt(maxSpins - minSpins + 1) + minSpins; // spins는 변위에서 랜덤
     final totalRotation = spins * 2 * pi;
 
     // 애니메이션 시작
@@ -47,13 +61,17 @@ class _RouletteState extends State<Roulette> with SingleTickerProviderStateMixin
     _controller.addListener(() {
       setState(() {
         // 회전 속도를 줄여 자연스럽게 멈추도록 설정
-        double deceleration = (maxSpins - _controller.value * (maxSpins - minSpins)) * decelerationFactor; // 감속 조정
-        _rotation = totalRotation * _controller.value * deceleration; // 회전 각도 업데이트
+        double deceleration =
+            (maxSpins - _controller.value * (maxSpins - minSpins)) *
+                decelerationFactor; // 감속 조정
+        _rotation =
+            totalRotation * _controller.value * deceleration; // 회전 각도 업데이트
       });
     });
 
     // 스피닝 종료 후 선택된 항목 표시
-    final duration = spinDuration * (1 - (1 - _controller.value) * decelerationFactor);
+    final duration =
+        spinDuration * (1 - (1 - _controller.value) * decelerationFactor);
     Future.delayed(Duration(milliseconds: duration.round()), () {
       _controller.stop();
       final selectedItemIndex = calculateSelectedItemIndex();
@@ -93,36 +111,38 @@ class _RouletteState extends State<Roulette> with SingleTickerProviderStateMixin
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("룰렛 스피너")),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Stack(
-              alignment: Alignment.topCenter,
-              children: [
-                Transform.rotate(
-                  angle: _rotation, // 현재 회전 각도
-                  child: CustomPaint(
-                    size: Size(300, 300),
-                    painter: RoulettePainter(items, colors),
+      body: GradientBackground(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Stack(
+                alignment: Alignment.topCenter,
+                children: [
+                  Transform.rotate(
+                    angle: _rotation, // 현재 회전 각도
+                    child: CustomPaint(
+                      size: Size(300, 300),
+                      painter: RoulettePainter(items, colors),
+                    ),
                   ),
-                ),
-                // 역삼각형 마커
-                Positioned(
-                  top: 0,
-                  child: CustomPaint(
-                    size: Size(30, 20),
-                    painter: TrianglePainter(),
+                  // 역삼각형 마커
+                  Positioned(
+                    top: 0,
+                    child: CustomPaint(
+                      size: Size(30, 20),
+                      painter: TrianglePainter(),
+                    ),
                   ),
-                ),
-              ],
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: startSpin,
-              child: Text("Spin"),
-            ),
-          ],
+                ],
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: startSpin,
+                child: Text("Spin"),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -170,8 +190,12 @@ class RoulettePainter extends CustomPainter {
         textDirection: TextDirection.ltr,
       );
       textPainter.layout();
-      final x = center.dx + (radius / 2) * cos(startAngle + sweepAngle / 2) - textPainter.width / 2;
-      final y = center.dy + (radius / 2) * sin(startAngle + sweepAngle / 2) - textPainter.height / 2;
+      final x = center.dx +
+          (radius / 2) * cos(startAngle + sweepAngle / 2) -
+          textPainter.width / 2;
+      final y = center.dy +
+          (radius / 2) * sin(startAngle + sweepAngle / 2) -
+          textPainter.height / 2;
       textPainter.paint(canvas, Offset(x, y));
     }
   }
@@ -200,5 +224,25 @@ class TrianglePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
     return false;
+  }
+}
+
+class GradientBackground extends StatelessWidget {
+  final Widget child;
+
+  GradientBackground({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.pink.shade100, Colors.blue.shade100],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
+      child: child,
+    );
   }
 }
