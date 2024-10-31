@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+// 메인 화면
 
 void main() {
   runApp(MyApp());
