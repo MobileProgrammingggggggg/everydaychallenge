@@ -42,13 +42,21 @@
 
 Frontend
 Flutter: UI 구현 및 멀티 플랫폼 애플리케이션 개발.
+
 Dart: Flutter 애플리케이션의 주요 프로그래밍 언어.
+
 Provider 또는 Riverpod: 상태 관리.
+
 GetX: 간편한 상태 관리 및 라우팅.
+
 Dio: 비동기 HTTP 요청.
+
 Hive: 로컬 데이터베이스로 사용자 정보 및 챌린지 기록 저장.
+
 Flutter Local Notifications: 알림 기능 구현.
+
 
 Backend
 서버리스 아키텍처: 필요에 따라 AWS Lambda 또는 기타 서버리스 서비스를 활용하여 추가적인 비즈니스 로직 처리.
+
 RESTful API: 원하는 경우, 자체적인 API를 구현하여 클라이언트와 서버 간의 데이터 통신 처리.
