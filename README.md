@@ -41,6 +41,7 @@
 🛠 사용 기술 스택
 
 Frontend
+
 Flutter: UI 구현 및 멀티 플랫폼 애플리케이션 개발.
 
 Dart: Flutter 애플리케이션의 주요 프로그래밍 언어.
@@ -54,6 +55,7 @@ Dio: 비동기 HTTP 요청.
 Hive: 로컬 데이터베이스로 사용자 정보 및 챌린지 기록 저장.
 
 Flutter Local Notifications: 알림 기능 구현.
+
 
 
 Backend
