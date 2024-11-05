@@ -7,7 +7,7 @@ class StoreScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text("상점")),
       body: Center(child: Text("상점 화면")),
-      bottomNavigationBar: CustomBottomNavigationBar()
+      bottomNavigationBar: CustomBottomNavigationBar(),
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'CustomBottomNavigationBar.dart';
 
 class CommunityScreen extends StatelessWidget {
   @override
@@ -6,6 +7,7 @@ class CommunityScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text("커뮤니티")),
       body: Center(child: Text("커뮤니티 화면")),
+      bottomNavigationBar: CustomBottomNavigationBar(),
     );
   }
 }

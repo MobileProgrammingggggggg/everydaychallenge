@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'CustomBottomNavigationBar.dart';
 
 class HomeScreen extends StatelessWidget {
   @override
@@ -6,6 +7,7 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text("홈")),
       body: Center(child: Text("홈 화면")),
+      bottomNavigationBar: CustomBottomNavigationBar(),
     );
   }
 }
