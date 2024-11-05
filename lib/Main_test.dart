@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'home_screen.dart';
+import 'calendar_screen.dart';
+import 'store_screen.dart';
+import 'ranking_screen.dart';
+import 'community_screen.dart';
+
 // 메인 화면
 
 void main() {
@@ -243,6 +249,26 @@ class ChallengeButton extends StatelessWidget {
   }
 }
 
+/*class CustomBottomNavigationBar extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return BottomNavigationBar(
+      type: BottomNavigationBarType.fixed, // 간격 크기 고정
+      items: [
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: "홈"),
+        BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: "캘린더"),
+        BottomNavigationBarItem(icon: Icon(Icons.store), label: "상점"),
+        BottomNavigationBarItem(icon: Icon(Icons.emoji_events), label: "랭킹"),
+        BottomNavigationBarItem(icon: Icon(Icons.chat), label: "커뮤니티"),
+      ],
+      selectedItemColor: Colors.blue,
+      unselectedItemColor: Colors.grey,
+      showUnselectedLabels: true, // 비선택 아이템의 라벨을 보여줌
+      showSelectedLabels: true, // 선택 아이템의 라벨을 보여줌
+    );
+  }
+}*/
+
 class CustomBottomNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -259,6 +285,40 @@ class CustomBottomNavigationBar extends StatelessWidget {
       unselectedItemColor: Colors.grey,
       showUnselectedLabels: true, // 비선택 아이템의 라벨을 보여줌
       showSelectedLabels: true, // 선택 아이템의 라벨을 보여줌
+      onTap: (index) {
+        switch (index) {
+          case 0:
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => HomeScreen()),
+            );
+            break;
+          case 1:
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => CalendarScreen()),
+            );
+            break;
+          case 2:
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => StoreScreen()),
+            );
+            break;
+          case 3:
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => RankingScreen()),
+            );
+            break;
+          case 4:
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => CommunityScreen()),
+            );
+            break;
+        }
+      },
     );
   }
 }
