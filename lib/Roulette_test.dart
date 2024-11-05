@@ -44,7 +44,12 @@ class _RouletteState extends State<Roulette>
     );
   }
 
+  bool _isSpinning = false; // 룰렛 회전 중인지 여부
+
   void startSpin() {
+    if (_isSpinning) return; // 이미 회전 중이면 실행하지 않음
+    _isSpinning = true; // 회전 시작 시 비활성화
+
     // 변수 정의
     const int minSpins = 4;
     const int maxSpins = 8;
@@ -77,6 +82,8 @@ class _RouletteState extends State<Roulette>
       final selectedItemIndex = calculateSelectedItemIndex();
       // 선택된 항목 표시 메시지 지연
       Future.delayed(Duration(milliseconds: resultDelay), () {
+        _isSpinning = false; // 회전 종료 시 활성화
+        setState(() {}); // 상태 업데이트
         showSelectedItemDialog(selectedItemIndex);
       });
     });
@@ -110,7 +117,7 @@ class _RouletteState extends State<Roulette>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("룰렛 스피너")),
+      appBar: AppBar(title: Text("챌린지 룰렛 돌리기")),
       body: GradientBackground(
         child: Center(
           child: Column(
@@ -138,7 +145,7 @@ class _RouletteState extends State<Roulette>
               ),
               SizedBox(height: 20),
               ElevatedButton(
-                onPressed: startSpin,
+                onPressed: _isSpinning ? null : startSpin, // 회전 중이면 비활성화
                 child: Text("Spin"),
               ),
             ],
