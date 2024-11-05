@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 import 'CustomBottomNavigationBar.dart';
 import 'Roulette_test.dart';
-import 'home_screen.dart';
-import 'calendar_screen.dart';
-import 'store_screen.dart';
-import 'ranking_screen.dart';
-import 'community_screen.dart';
+import 'Login_screen.dart';
 
 // 메인 화면
 
@@ -88,9 +84,10 @@ class LogoutIcon extends StatelessWidget {
   }
 
   void logout(BuildContext context) {
-    // Implement your logout logic here
-    print("User logged out.");
-    // You might want to navigate to the login page or clear user data
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => LoginScreen()), // 로그인 화면으로 이동
+    );
   }
 }
 
