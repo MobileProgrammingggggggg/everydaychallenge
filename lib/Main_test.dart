@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'CustomBottomNavigationBar.dart';
+import 'Roulette_test.dart';
 import 'home_screen.dart';
 import 'calendar_screen.dart';
 import 'store_screen.dart';
@@ -233,7 +235,11 @@ class ChallengeButton extends StatelessWidget {
                 borderRadius: BorderRadius.circular(30),
               ),
             ),
-            onPressed: () {},
+            onPressed: () {// 버튼을 눌렀을 때 RoulletTestScreen으로 이동
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => Roulette()),
+              );},
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
               child: Text(
@@ -269,59 +275,7 @@ class ChallengeButton extends StatelessWidget {
   }
 }*/
 
-class CustomBottomNavigationBar extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed, // 간격 크기 고정
-      items: [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: "홈"),
-        BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: "캘린더"),
-        BottomNavigationBarItem(icon: Icon(Icons.store), label: "상점"),
-        BottomNavigationBarItem(icon: Icon(Icons.emoji_events), label: "랭킹"),
-        BottomNavigationBarItem(icon: Icon(Icons.chat), label: "커뮤니티"),
-      ],
-      selectedItemColor: Colors.blue,
-      unselectedItemColor: Colors.grey,
-      showUnselectedLabels: true, // 비선택 아이템의 라벨을 보여줌
-      showSelectedLabels: true, // 선택 아이템의 라벨을 보여줌
-      onTap: (index) {
-        switch (index) {
-          case 0:
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => HomeScreen()),
-            );
-            break;
-          case 1:
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => CalendarScreen()),
-            );
-            break;
-          case 2:
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => StoreScreen()),
-            );
-            break;
-          case 3:
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => RankingScreen()),
-            );
-            break;
-          case 4:
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => CommunityScreen()),
-            );
-            break;
-        }
-      },
-    );
-  }
-}
+
 
 //ChallengeScreen: 화면 전체 구조를 정의하고, 필요한 위젯을 불러옵니다.
 //CustomAppBar: 앱의 상단 바를 담당하는 컴포넌트입니다. NotificationIcon 컴포넌트로 알림 아이콘을 분리했습니다.
