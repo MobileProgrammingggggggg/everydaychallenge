@@ -6,7 +6,7 @@ import 'Login_screen.dart';
 // 메인 화면
 
 void main() {
-  runApp(MyApp());
+  runApp(Login());
 }
 
 class MyApp extends StatelessWidget {
