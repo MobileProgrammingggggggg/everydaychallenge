@@ -77,7 +77,7 @@ class _ChallengeButtonState extends State<ChallengeButton> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => succeed()), // 성공 화면으로 이동
+                            builder: (context) => Succeed()), // 성공 화면으로 이동
                       );
                     }
                   },
@@ -114,7 +114,7 @@ class _ChallengeButtonState extends State<ChallengeButton> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => fail()), // 실패 화면으로 이동
+                            builder: (context) => Failed()), // 실패 화면으로 이동
                       );
                     }
                   },
