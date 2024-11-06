@@ -20,21 +20,27 @@ class MyApp extends StatelessWidget {
 }
 
 class ChallengeScreen extends StatelessWidget {
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: CustomAppBar(),
       body: GradientBackground(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            HeaderSection(),
-            CountdownText(),
-            CharacterImage(),
-            ChallengePrompt(),
-            ChallengeButton(),
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              HeaderSection(),
+              SizedBox(height: 20), // 위젯 간의 간격
+              CountdownText(),
+              SizedBox(height: 20), // 위젯 간의 간격
+              CharacterImage(),
+              SizedBox(height: 20), // 위젯 간의 간격
+              ChallengePrompt(),
+              SizedBox(height: 20), // 위젯 간의 간격
+              ChallengeButton(),
+              SizedBox(height: 100), // 하단 여백
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: CustomBottomNavigationBar(),
@@ -131,6 +137,8 @@ class GradientBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity, // 가로를 무한대로 설정
+      height: double.infinity, // 세로를 무한대로 설정
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [Colors.pink.shade100, Colors.blue.shade100],
