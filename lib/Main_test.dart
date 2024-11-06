@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'CustomBottomNavigationBar.dart';
-import 'Roulette_test.dart';
 import 'Login_screen.dart';
+import 'ChallengeButton.dart';
 
 // 메인 화면
 
 void main() {
-  runApp(Login());
+  //runApp(Login());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -19,6 +20,7 @@ class MyApp extends StatelessWidget {
 }
 
 class ChallengeScreen extends StatelessWidget {
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -198,7 +200,8 @@ class CharacterImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Image.network(
-      'https://i.ibb.co/LnBF844/image.jpg', // Ensure you add the character image in assets
+      'https://i.ibb.co/LnBF844/image.jpg',
+      // Ensure you add the character image in assets
       height: 150,
     );
   }
@@ -217,69 +220,3 @@ class ChallengePrompt extends StatelessWidget {
     );
   }
 }
-
-class ChallengeButton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 30),
-      child: Column(
-        children: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-            ),
-            onPressed: () {// 버튼을 눌렀을 때 RoulletTestScreen으로 이동
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => Roulette()),
-              );},
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
-              child: Text(
-                "챌린지 뽑기",
-                style: TextStyle(color: Colors.white, fontSize: 16),
-              ),
-            ),
-          ),
-          SizedBox(height: 20), // 버튼 아래에 간격 추가
-        ],
-      ),
-    );
-  }
-}
-
-/*class CustomBottomNavigationBar extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed, // 간격 크기 고정
-      items: [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: "홈"),
-        BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: "캘린더"),
-        BottomNavigationBarItem(icon: Icon(Icons.store), label: "상점"),
-        BottomNavigationBarItem(icon: Icon(Icons.emoji_events), label: "랭킹"),
-        BottomNavigationBarItem(icon: Icon(Icons.chat), label: "커뮤니티"),
-      ],
-      selectedItemColor: Colors.blue,
-      unselectedItemColor: Colors.grey,
-      showUnselectedLabels: true, // 비선택 아이템의 라벨을 보여줌
-      showSelectedLabels: true, // 선택 아이템의 라벨을 보여줌
-    );
-  }
-}*/
-
-
-
-//ChallengeScreen: 화면 전체 구조를 정의하고, 필요한 위젯을 불러옵니다.
-//CustomAppBar: 앱의 상단 바를 담당하는 컴포넌트입니다. NotificationIcon 컴포넌트로 알림 아이콘을 분리했습니다.
-//GradientBackground: 배경 그라데이션을 담당하는 컴포넌트로, 다른 컴포넌트에서 재사용할 수 있습니다.
-//HeaderSection: 화면 상단에 포인트와 달성률을 표시하는 섹션입니다.
-//CountdownText: 남은 시간을 표시하는 컴포넌트입니다.
-//CharacterImage: 캐릭터 이미지를 표시하는 컴포넌트입니다.
-//ChallengePrompt: "오늘의 챌린지는?" 텍스트를 표시합니다.
-//ChallengeButton: 챌린지 버튼을 위한 컴포넌트입니다.
-//CustomBottomNavigationBar: 하단 네비게이션 바를 담당하는 컴포넌트입니다.
