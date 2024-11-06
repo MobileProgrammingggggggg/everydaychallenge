@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'CustomBottomNavigationBar.dart';
 
 void main() {
   runApp(CommunityScreen());
@@ -10,7 +11,19 @@ class CommunityScreen extends StatelessWidget {
     return MaterialApp(
       title: 'Community App',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: PostListScreen(),
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text('커뮤니티'),
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back),
+            onPressed: () {
+              Navigator.pop(context);  // 뒤로가기 버튼을 눌렀을 때 이전 화면으로 돌아가기
+            },
+          ),
+        ),
+        body: PostListScreen(),
+        bottomNavigationBar: CustomBottomNavigationBar(),
+      ),
     );
   }
 }
