@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'CustomBottomNavigationBar.dart';
 import 'Login_screen.dart';
 import 'ChallengeButton.dart';
+import 'NotificationScreen.dart'; // NotificationScreen import
+
 
 // 메인 화면
 
@@ -101,7 +103,12 @@ class NotificationIcon extends StatelessWidget {
       children: [
         IconButton(
           icon: Icon(Icons.notifications, color: Colors.black),
-          onPressed: () {},
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => NotificationScreen()), // NotificationScreen으로 이동
+            );
+          },
         ),
         Positioned(
           right: 10,
