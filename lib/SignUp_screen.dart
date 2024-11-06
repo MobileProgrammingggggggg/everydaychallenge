@@ -18,14 +18,15 @@ class SignUpScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset : false,
       appBar: AppBar(
         title: Text('회원가입'),
         centerTitle: true, // 제목을 가운데 정렬
         backgroundColor: Colors.white, // 앱바 배경색을 흰색으로 설정
       ),
       backgroundColor: Colors.white, // 앱 전체 배경색을 흰색으로 설정
-      body: Padding(
-        padding: const EdgeInsets.all(100.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(30.0),
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -161,6 +162,7 @@ class SignUpScreen extends StatelessWidget {
                       ),
                     ),
                   ],
+
                 ),
               ),
             ],

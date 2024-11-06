@@ -11,12 +11,15 @@ class ChallengeButton extends StatefulWidget {
 
 class _ChallengeButtonState extends State<ChallengeButton> {
   int flag = 1; // 룰렛 사용 여부 확인
+  // 이 부분을 데이터베이스에서 가져와야 다른 화면에서 다시 불러와도 그 전 정보를 유지함.
+  // 화면을 새로 불러올때마다 flag 변수를 1로 설정하기 때문에 챌린지를 다시 뽑아야 하는것.
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 30),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           if (flag == 1) // flag가 1일 때 챌린지 뽑기 버튼 표시
             ElevatedButton(
@@ -30,14 +33,16 @@ class _ChallengeButtonState extends State<ChallengeButton> {
                 // flag 값을 0으로 변경하고 룰렛 화면으로 이동
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => Roulette()), // flag가 1일 때
+                  MaterialPageRoute(
+                      builder: (context) => Roulette()), // flag가 1일 때
                 );
                 setState(() {
                   flag = 2; // 상태 변경
                 });
               },
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
                 child: Text(
                   "챌린지 뽑기",
                   style: TextStyle(color: Colors.white, fontSize: 16),
@@ -71,12 +76,14 @@ class _ChallengeButtonState extends State<ChallengeButton> {
                       });
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => succeed()), // 성공 화면으로 이동
+                        MaterialPageRoute(
+                            builder: (context) => Succeed()), // 성공 화면으로 이동
                       );
                     }
                   },
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 15, horizontal: 30),
                     child: Text(
                       "성공",
                       style: TextStyle(color: Colors.white, fontSize: 16),
@@ -106,12 +113,14 @@ class _ChallengeButtonState extends State<ChallengeButton> {
                       });
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => fail()), // 실패 화면으로 이동
+                        MaterialPageRoute(
+                            builder: (context) => Failed()), // 실패 화면으로 이동
                       );
                     }
                   },
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 15, horizontal: 30),
                     child: Text(
                       "실패",
                       style: TextStyle(color: Colors.white, fontSize: 16),
@@ -121,11 +130,10 @@ class _ChallengeButtonState extends State<ChallengeButton> {
               ],
             )
           else // flag가 3또는 4일 때 성공 또는 실패 메시지 표시
-              Text(
-                flag == 3 ? "성공~!" : "실패ㅠ", // 조건에 따라 메시지 변경
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-          SizedBox(height: 100), // 버튼 아래에 간격 추가
+            Text(
+              flag == 3 ? "성공~!" : "실패ㅠ", // 조건에 따라 메시지 변경
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
         ],
       ),
     );

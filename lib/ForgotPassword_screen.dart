@@ -17,14 +17,15 @@ class ForgotPasswordScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset : false,
       appBar: AppBar(
         title: Text('아이디 / 비밀번호 찾기'),
         centerTitle: true,
         backgroundColor: Colors.white, // 앱바 배경색을 흰색으로 설정
       ),
       backgroundColor: Colors.white, // 전체 배경색을 흰색으로 설정
-      body: Padding(
-        padding: const EdgeInsets.all(100.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(30.0),
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
