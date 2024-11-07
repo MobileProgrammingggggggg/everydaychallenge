@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:test_flutter/themes/colors.dart';
 import 'CustomBottomNavigationBar.dart';
 import 'Login_screen.dart';
 import 'ChallengeButton.dart';
@@ -51,7 +52,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         centerTitle: true,
         title: Text(
           "매일 매일 챌린지!",
-          style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+          style: TextStyle(color: AppColors.textBlue, fontWeight: FontWeight.bold),
         ),
         leading: LogoutIcon(),
         actions: [NotificationIcon()]);
@@ -133,7 +134,7 @@ class GradientBackground extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.pink.shade100, Colors.blue.shade100],
+          colors: [AppColors.mainPink, AppColors.mainBlue],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
@@ -153,7 +154,7 @@ class HeaderSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.star, color: Colors.blue),
+              Icon(Icons.star, color: AppColors.textBlue),
               SizedBox(width: 5),
               Text(
                 "300 P",
@@ -168,11 +169,11 @@ class HeaderSection extends StatelessWidget {
             children: [
               Text(
                 "D + 9",
-                style: TextStyle(color: Colors.blue, fontSize: 18),
+                style: TextStyle(color: AppColors.textBlue, fontSize: 18),
               ),
               Text(
                 "달성률: 98%",
-                style: TextStyle(color: Colors.black),
+                style: TextStyle(color: AppColors.textBlue),
               ),
             ],
           ),
@@ -188,7 +189,7 @@ class CountdownText extends StatelessWidget {
     return Text(
       "7시간 56분 남았습니다.",
       style: TextStyle(
-        color: Colors.blue,
+        color: AppColors.textBlue,
         fontSize: 24,
         fontWeight: FontWeight.bold,
       ),
@@ -199,8 +200,8 @@ class CountdownText extends StatelessWidget {
 class CharacterImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Image.network(
-      'https://i.ibb.co/LnBF844/image.jpg',
+    return Image.asset(
+      'assets/images/character.png',
       // Ensure you add the character image in assets
       height: 150,
     );
@@ -213,7 +214,7 @@ class ChallengePrompt extends StatelessWidget {
     return Text(
       "오늘의 챌린지는?",
       style: TextStyle(
-        color: Colors.blue,
+        color: AppColors.textBlue,
         fontSize: 18,
         fontWeight: FontWeight.bold,
       ),
