@@ -51,7 +51,7 @@ class RankingScreen extends StatelessWidget {
             ),
           ),
 
-          // 나머지 랭킹 리스트
+          //  나머지 랭킹 리스트
           Expanded(
             child: ListView(
               children: List.generate(10, (index) {
