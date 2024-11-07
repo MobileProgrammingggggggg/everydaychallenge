@@ -56,9 +56,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        title: Text(
-          "매일 매일 챌린지!",
-          style: TextStyle(color: AppColors.textBlue, fontWeight: FontWeight.bold),
+        title:  Image.asset(
+          'assets/images/logo.png', // 이미지 경로
+          height: 70, // 이미지 높이 설정
+          width: 200,
         ),
         leading: LogoutIcon(),
         actions: [NotificationIcon()]);
