@@ -53,7 +53,8 @@ class LoginScreen extends StatelessWidget {
               // 이미지 추가
               Image.asset(
                 'assets/images/logo.png', // 이미지 경로
-                height: 100, // 이미지 높이 설정
+                height: 250, // 이미지 높이 설정
+                width: 400,
               ),
               SizedBox(height: 30), // 이미지와 다음 요소 간격
               Container(

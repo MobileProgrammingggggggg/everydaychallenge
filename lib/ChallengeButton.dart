@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:test_flutter/themes/colors.dart';
 import 'Roulette_test.dart';
 import 'Success_screen.dart';
 import 'Failure_screen.dart';
@@ -24,7 +25,7 @@ class _ChallengeButtonState extends State<ChallengeButton> {
           if (flag == 1) // flag가 1일 때 챌린지 뽑기 버튼 표시
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
+                backgroundColor: AppColors.textBlue,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
@@ -55,7 +56,7 @@ class _ChallengeButtonState extends State<ChallengeButton> {
               children: [
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color.fromRGBO(92, 103, 227, 1),
+                    backgroundColor: AppColors.brightPink,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
@@ -92,7 +93,7 @@ class _ChallengeButtonState extends State<ChallengeButton> {
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
+                    backgroundColor: AppColors.deepBlue,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),

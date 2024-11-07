@@ -2,14 +2,11 @@ import 'package:flutter/material.dart';
 import 'CustomBottomNavigationBar.dart';
 import 'Login_screen.dart';
 import 'ChallengeButton.dart';
-import 'NotificationScreen.dart'; // NotificationScreen 파일 import
-
 
 // 메인 화면
 
 void main() {
-  // 로그인 화면 실행
-  // runApp(Login());
+  //runApp(Login());
   runApp(MyApp());
 }
 
@@ -51,7 +48,6 @@ class ChallengeScreen extends StatelessWidget {
   }
 }
 
-// 커스텀 앱바 위젯
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
@@ -71,14 +67,13 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize => Size.fromHeight(kToolbarHeight);
 }
 
-// 로그아웃 아이콘 위젯
 class LogoutIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
-        // 로그아웃 로직 구현
-        logout(context); // context와 함께 로그아웃 함수 호출
+        // Implement your logout logic here
+        logout(context); // Call your logout function with context
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 2.0),
@@ -104,7 +99,6 @@ class LogoutIcon extends StatelessWidget {
   }
 }
 
-// 알림 아이콘 위젯
 class NotificationIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -113,12 +107,7 @@ class NotificationIcon extends StatelessWidget {
       children: [
         IconButton(
           icon: Icon(Icons.notifications, color: Colors.black),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => NotificationScreen()), // NotificationScreen으로 이동
-            );
-          },
+          onPressed: () {},
         ),
         Positioned(
           right: 10,
@@ -140,7 +129,6 @@ class NotificationIcon extends StatelessWidget {
   }
 }
 
-// 그라데이션 배경 위젯
 class GradientBackground extends StatelessWidget {
   final Widget child;
 
@@ -163,7 +151,6 @@ class GradientBackground extends StatelessWidget {
   }
 }
 
-// 상단 섹션 위젯
 class HeaderSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -203,7 +190,6 @@ class HeaderSection extends StatelessWidget {
   }
 }
 
-// 카운트다운 텍스트 위젯
 class CountdownText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -218,19 +204,17 @@ class CountdownText extends StatelessWidget {
   }
 }
 
-// 캐릭터 이미지 위젯
 class CharacterImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Image.network(
       'https://i.ibb.co/LnBF844/image.jpg',
-      // 캐릭터 이미지를 assets에 추가하세요
+      // Ensure you add the character image in assets
       height: 150,
     );
   }
 }
 
-// 챌린지 프롬프트 텍스트 위젯
 class ChallengePrompt extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
