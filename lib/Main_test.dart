@@ -3,9 +3,9 @@ import 'package:test_flutter/themes/colors.dart';
 import 'CustomBottomNavigationBar.dart';
 import 'Login_screen.dart';
 import 'ChallengeButton.dart';
+// import 'Community_Screen.dart';
 
 // 메인 화면
-
 void main() {
   //runApp(Login());
   runApp(MyApp());
@@ -53,7 +53,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-        backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         title:  Image.asset(
