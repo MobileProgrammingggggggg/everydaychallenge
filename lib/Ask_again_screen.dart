@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-class ask_again extends StatelessWidget {
+class Ask_again extends StatelessWidget {
   final String message;
 
-  ask_again({required this.message}); // 생성자에서 문자열을 받음
+  Ask_again({required this.message}); // 생성자에서 문자열을 받음
 
   @override
   Widget build(BuildContext context) {

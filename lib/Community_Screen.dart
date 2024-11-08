@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'CustomBottomNavigationBar.dart';
 import 'Error_screen.dart';
 import 'Main_test.dart';
+// import 'Ask_again_screen.dart';
 // import 'package:test_flutter/themes/colors.dart';
 
 void main() {
@@ -59,7 +60,8 @@ class PostProvider extends ChangeNotifier {
   }
 
   // 게시물 작성 추가
-  void addPost(String title, String author, String date, int view, String content) {
+  void addPost(
+      String title, String author, String date, int view, String content) {
     _posts.insert(0, {
       'title': title,
       'author': author,
@@ -86,11 +88,11 @@ class PostProvider extends ChangeNotifier {
         _currentPage = totalPages; // 페이지가 범위를 벗어나지 않게 설정
       }
 
-      // notifyListeners();
+      notifyListeners();
       // 화면 갱신을 한 텀 늦추어 실행
-      Future.delayed(Duration(milliseconds: 100), () {
-        notifyListeners();
-      });
+      // Future.delayed(Duration(milliseconds: 100), () {
+      //   notifyListeners();
+      // });
     }
   }
 
@@ -192,13 +194,14 @@ class CommunityScreen extends StatelessWidget {
                     Expanded(
                       child: ListView.builder(
                         itemCount:
-                        postProvider.currentPosts.length, // 삭제 후 정확한 길이로 변경
+                            postProvider.currentPosts.length, // 삭제 후 정확한 길이로 변경
                         itemBuilder: (context, index) {
                           if (index >= postProvider.currentPosts.length) {
                             return SizedBox.shrink(); // 인덱스가 범위를 벗어난 경우 빈 위젯 반환
                           }
                           final post = postProvider.currentPosts[index];
-                          final commentCount = postProvider.getCommentCount(index); // 댓글 수
+                          final commentCount =
+                              postProvider.getCommentCount(index); // 댓글 수
                           return Card(
                             margin: EdgeInsets.all(2.0),
                             child: ListTile(
@@ -219,8 +222,8 @@ class CommunityScreen extends StatelessWidget {
                                     builder: (context) => PostDetailScreen(
                                       post: post,
                                       postIndex:
-                                      (postProvider.currentPage - 1) * 8 +
-                                          index,
+                                          (postProvider.currentPage - 1) * 8 +
+                                              index,
                                     ),
                                   ),
                                 );
@@ -553,20 +556,17 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           actions: [
                             TextButton(
                               onPressed: () {
+                                // 삭제 처리 후
                                 postProvider.deletePost(widget.postIndex);
+
+                                // 다이얼로그 닫기
                                 Navigator.pop(context); // 다이얼로그 닫기
 
-                                // 만약 스택에 이전 화면이 있으면 pop, 없으면 CommunityScreen으로 이동
-                                if (Navigator.canPop(context)) {
-                                  Navigator.pop(context);
-                                } else {
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            CommunityScreen()),
-                                  );
-                                }
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => CommunityScreen()),
+                                );
                               },
                               child: Text('삭제'),
                             ),
