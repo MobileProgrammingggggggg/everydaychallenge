@@ -3,6 +3,7 @@ import 'package:test_flutter/themes/colors.dart';
 import 'CustomBottomNavigationBar.dart';
 import 'Login_screen.dart';
 import 'ChallengeButton.dart';
+import 'Ask_again_screen.dart';
 // import 'Community_Screen.dart';
 
 // 메인 화면
@@ -74,9 +75,19 @@ class LogoutIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () {
-        // Implement your logout logic here
-        logout(context); // Call your logout function with context
+      onTap: () async {
+        // 로그아웃 확인 대화상자 보여주기
+        int? result = await showDialog<int>(
+          context: context,
+          builder: (BuildContext context) {
+            return Ask_again(message: "정말 로그아웃 하시겠습니까?");
+          },
+        );
+
+        // 확인 버튼 클릭 시 로그아웃 실행
+        if (result == 1) {
+          logout(context);
+        }
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 2.0),
