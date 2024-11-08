@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'CustomBottomNavigationBar.dart';
 import 'Error_screen.dart';
 import 'Main_test.dart';
-import 'package:test_flutter/themes/colors.dart';
+// import 'package:test_flutter/themes/colors.dart';
 
 void main() {
   runApp(CommunityScreen());
@@ -186,7 +186,7 @@ class CommunityScreen extends StatelessWidget {
             ),
             body: Consumer<PostProvider>(
               builder: (context, postProvider, child) {
-                final posts = postProvider.currentPosts; // posts를 실제로 사용
+                //final posts = postProvider.currentPosts; // posts를 실제로 사용
                 return Column(
                   children: [
                     Expanded(
