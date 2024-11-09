@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'Main_test.dart';
 
+//main 파일 이름 변경, 삭제 노노
 void main() {
   runApp(MyApp());
 }
