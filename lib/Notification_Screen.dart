@@ -1,67 +1,55 @@
 import 'package:flutter/material.dart';
 
-class NotificationScreen extends StatelessWidget {
+class Notification_Screen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Notifications"),
+        title: Text("알림"),
       ),
       body: ListView(
         children: [
           NotificationCard(
-            icon: Icons.bolt,
-            title: "Custom Action",
-            description: "Action Description",
-            time: "Time frame",
+            icon: Icons.emoji_events, // 도전 아이콘
+            title: "3일 연속 성공!",
+            description: "당신의 열정이 빛나고 있어요!",
+            time: "방금 전",
             titleStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             descriptionStyle: TextStyle(color: Colors.grey[700], fontSize: 14),
             timeStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
           ),
           NotificationCard(
-            icon: Icons.assignment,
-            title: "Task assigned to you",
-            description: "Aye yo, do this ting bruv",
-            time: "2 hours ago",
-            subtitle: "Dunder Mifflin",
+            icon: Icons.hourglass_bottom, // 마감 아이콘
+            title: "챌린지 마감 3시간 전",
+            description: "마감까지 3시간 남았습니다! 지금 도전하세요!",
+            time: "3시간 전",
             titleStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             descriptionStyle: TextStyle(color: Colors.grey[700], fontSize: 14),
             timeStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
           ),
           NotificationCard(
-            icon: Icons.notifications,
-            title: "Notification triggered",
-            description: "Michael is in the warehouse",
-            time: "6 hours ago",
-            subtitle: "Dunder Mifflin",
-            titleStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            descriptionStyle: TextStyle(color: Colors.grey[700], fontSize: 14),
-            timeStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
-          ),
-          // 추가된 알림 카드
-          NotificationCard(
-            icon: Icons.warning,
-            title: "System Alert",
-            description: "Low battery",
-            time: "30 minutes ago",
+            icon: Icons.flag, // 챌린지 시작 아이콘
+            title: "오늘 챌린지 시작!",
+            description: "오늘의 챌린지가 시작됐습니다! 도전을 기다리고 있어요!",
+            time: "오늘",
             titleStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             descriptionStyle: TextStyle(color: Colors.grey[700], fontSize: 14),
             timeStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
           ),
           NotificationCard(
-            icon: Icons.update,
-            title: "Update Available",
-            description: "New software update ready to install",
-            time: "1 hour ago",
+            icon: Icons.shopping_cart, // 상점 아이콘
+            title: "상점에 새로운 아이템 입고",
+            description: "새로운 아이템이 상점에 도착했습니다! 지금 확인해보세요!",
+            time: "1시간 전",
             titleStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             descriptionStyle: TextStyle(color: Colors.grey[700], fontSize: 14),
             timeStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
           ),
           NotificationCard(
-            icon: Icons.mail,
-            title: "New Message",
-            description: "You have received a new message",
-            time: "Just now",
+            icon: Icons.insert_chart, // 주간 요약 아이콘
+            title: "주간요약",
+            description: "한 주간의 성과를 확인하세요! 멋진 한 주였어요!",
+            time: "어제",
             titleStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             descriptionStyle: TextStyle(color: Colors.grey[700], fontSize: 14),
             timeStyle: TextStyle(color: Colors.grey[500], fontSize: 12),

@@ -6,6 +6,8 @@ import 'package:test_flutter/Store_screen.dart';
 import 'Main_test.dart';
 import 'Calendar_screen.dart';
 import 'Community_Screen.dart';
+import 'Store_screen.dart';
+
 
 class CustomBottomNavigationBar extends StatelessWidget {
   @override

@@ -3,6 +3,8 @@ import 'CustomBottomNavigationBar.dart';
 import 'Login_screen.dart';
 import 'ChallengeButton.dart';
 import 'Ask_again_screen.dart';
+import 'Notification_Screen.dart';
+
 // import 'Community_Screen.dart';
 
 // 메인 화면
@@ -119,7 +121,12 @@ class NotificationIcon extends StatelessWidget {
       children: [
         IconButton(
           icon: Icon(Icons.notifications, color: Colors.black),
-          onPressed: () {},
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => Notification_Screen()), // NotificationScreen으로 이동
+            );
+          },
         ),
         Positioned(
           right: 10,
