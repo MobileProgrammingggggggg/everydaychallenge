@@ -72,6 +72,9 @@ flutter:
     - assets/images/error.png
     - assets/images/character.png
     - assets/images/logo2.jpeg
+    - assets/images/good.png
+    - assets/images/left_good.png
+    - assets/images/right_good.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

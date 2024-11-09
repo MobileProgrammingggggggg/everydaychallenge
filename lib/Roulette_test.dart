@@ -84,7 +84,7 @@ class _RouletteState extends State<Roulette>
       Future.delayed(Duration(milliseconds: resultDelay), () {
         _isSpinning = false; // 회전 종료 시 활성화
         setState(() {}); // 상태 업데이트
-        showSelectedItemDialog(selectedItemIndex);
+        showSelectedItemDialog(context, selectedItemIndex);
       });
     });
   }
@@ -94,21 +94,92 @@ class _RouletteState extends State<Roulette>
     return (((-(_rotation / (pi / 180)) + 270) % 360) ~/ 72) % items.length;
   }
 
-  void showSelectedItemDialog(int index) {
+  void showSelectedItemDialog(BuildContext context, int index) {
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("선택된 항목"),
-          content: Text(items[index]),
-          actions: [
-            TextButton(
-              child: Text("확인"),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: Colors.black, width: 3),
+          ),
+          child: Stack(
+            children: [
+              // 배경 이미지 (좌측 하단으로 배치)
+              Positioned(
+                bottom: 3, // 하단에 배치
+                left: 0,   // 왼쪽에 배치
+                child: Image.asset(
+                  'assets/images/left_good.png', // 배경 이미지
+                  width: 120,
+                ),
+              ),
+              Positioned(
+                bottom: 3, // 하단에 배치
+                right: 0,   // 왼쪽에 배치
+                child: Image.asset(
+                  'assets/images/right_good.png', // 배경 이미지
+                  width: 120,
+                ),
+              ),
+              // 다이얼로그 내용 (문구와 텍스트)
+              Container(
+                width: 400, // 고정된 가로 크기
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // 상단에 추가된 문구 (둥근 배경 포함)
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 40),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE6C9D1), // 배경 색상
+                        borderRadius: BorderRadius.circular(20), // 둥근 모서리
+                      ),
+                      child: const Text(
+                        '오늘의 챌린지!!',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.pinkAccent, // 글씨 색상
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24), // 문구와 아이템 텍스트 사이의 간격
+                    // 아이템 텍스트
+                    Text(
+                      '${items[index]}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.lightBlue,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 28,
+                      ),
+                    ),
+                    const SizedBox(height: 24), // 텍스트와 버튼 사이의 간격
+                    // 확인 버튼을 중앙에 배치
+                    Center(
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          backgroundColor: const Color(0xFF5C67E3),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text(
+                          '확인',
+                          style: TextStyle(fontSize: 18),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
