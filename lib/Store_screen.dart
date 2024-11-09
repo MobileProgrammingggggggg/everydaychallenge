@@ -14,19 +14,14 @@ class _StoreScreenState extends State<StoreScreen> {
 
   // 아이템 구매 함수
   void _buyItem(String itemName, int itemCost, IconData itemIcon) {
-    if (points >= itemCost) {
-      setState(() {
-        points -= itemCost; // 포인트 차감
-        if (purchasedItems.containsKey(itemName)) {
-          purchasedItems[itemName] = purchasedItems[itemName]! + 1; // 아이템 갯수 증가
-        } else {
-          purchasedItems[itemName] = 1;
-        }
-      });
-      _showPurchaseDialog(context, itemName);
-    } else {
-      _showErrorDialog(context); // 포인트 부족 처리
-    }
+    setState(() {
+      points -= itemCost; // 포인트 차감
+      if (purchasedItems.containsKey(itemName)) {
+        purchasedItems[itemName] = purchasedItems[itemName]! + 1; // 아이템 갯수 증가
+      } else {
+        purchasedItems[itemName] = 1;
+      }
+    });
   }
 
   // 구매한 아이템들을 아이콘과 갯수로 표시하는 함수
@@ -77,7 +72,7 @@ class _StoreScreenState extends State<StoreScreen> {
   }
 
   // 구매 다이얼로그 표시 함수
-  void _showPurchaseDialog(BuildContext context, String itemName) {
+  void _showPurchaseDialog(BuildContext context, String itemName, int itemCost, IconData itemIcon) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -107,8 +102,14 @@ class _StoreScreenState extends State<StoreScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
               child: TextButton(
                 onPressed: () {
-                  Navigator.of(context).pop();
-                  _showSuccessDialog(context, itemName);
+                  if (points >= itemCost) {
+                    _buyItem(itemName, itemCost, itemIcon);
+                    Navigator.of(context).pop();
+                    _showSuccessDialog(context, itemName);
+                  } else {
+                    Navigator.of(context).pop();
+                    _showErrorDialog(context); // 포인트 부족 처리
+                  }
                 },
                 child: Text("확인", style: TextStyle(color: Colors.white)),
                 style: ButtonStyle(
@@ -249,7 +250,7 @@ class _StoreScreenState extends State<StoreScreen> {
                       points: 30,
                       description: "한 번 더 룰렛을 돌릴 수 있습니다.",
                       onTap: () {
-                        _buyItem("룰렛 재추첨권", 30, Icons.refresh);
+                        _showPurchaseDialog(context, "룰렛 재추첨권", 30, Icons.refresh);
                       },
                     ),
                     ShopItem(
@@ -258,7 +259,7 @@ class _StoreScreenState extends State<StoreScreen> {
                       points: 100,
                       description: "하루 한 번 챌린지를 스킵할 수 있습니다.",
                       onTap: () {
-                        _buyItem("챌린지 스킵권", 100, Icons.flash_on);
+                        _showPurchaseDialog(context, "챌린지 스킵권", 100, Icons.flash_on);
                       },
                     ),
                     ShopItem(
@@ -267,7 +268,7 @@ class _StoreScreenState extends State<StoreScreen> {
                       points: 50,
                       description: "챌린지 기간을 하루 연장할 수 있습니다.",
                       onTap: () {
-                        _buyItem("하루 연장권", 50, Icons.access_time);
+                        _showPurchaseDialog(context, "하루 연장권", 50, Icons.access_time);
                       },
                     ),
                     ShopItem(
@@ -276,7 +277,7 @@ class _StoreScreenState extends State<StoreScreen> {
                       points: 50,
                       description: "포인트 적립을 2배로 해줍니다.",
                       onTap: () {
-                        _buyItem("포인트 2배권", 50, Icons.double_arrow);
+                        _showPurchaseDialog(context, "포인트 2배권", 50, Icons.double_arrow);
                       },
                     ),
                     ShopItem(
@@ -285,7 +286,7 @@ class _StoreScreenState extends State<StoreScreen> {
                       points: 30,
                       description: "하루의 기록을 삭제할 수 있습니다.",
                       onTap: () {
-                        _buyItem("기록 삭제권", 30, Icons.delete_forever);
+                        _showPurchaseDialog(context, "기록 삭제권", 30, Icons.delete_forever);
                       },
                     ),
                     ShopItem(
@@ -294,7 +295,7 @@ class _StoreScreenState extends State<StoreScreen> {
                       points: 20,
                       description: "챌린지의 난이도를 선택할 수 있습니다.",
                       onTap: () {
-                        _buyItem("난이도 선택권", 20, Icons.auto_fix_high);
+                        _showPurchaseDialog(context, "난이도 선택권", 20, Icons.auto_fix_high);
                       },
                     ),
                   ],
@@ -351,6 +352,7 @@ class _StoreScreenState extends State<StoreScreen> {
     );
   }
 }
+
 // 포인트 부족 시 다이얼로그
 void _showErrorDialog(BuildContext context) {
   showDialog(
