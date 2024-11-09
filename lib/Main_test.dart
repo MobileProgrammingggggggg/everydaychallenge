@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'CustomBottomNavigationBar.dart';
 import 'Login_screen.dart';
 import 'ChallengeButton.dart';
+import 'Ask_again_screen.dart';
+// import 'Community_Screen.dart';
 
 // 메인 화면
-
 void main() {
   //runApp(Login());
   runApp(MyApp());
@@ -14,6 +15,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false, // 디버그 버튼 가리기
       home: ChallengeScreen(),
     );
   }
@@ -52,7 +54,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-        backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         title: Text(
@@ -71,9 +73,19 @@ class LogoutIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () {
-        // Implement your logout logic here
-        logout(context); // Call your logout function with context
+      onTap: () async {
+        // 로그아웃 확인 대화상자 보여주기
+        int? result = await showDialog<int>(
+          context: context,
+          builder: (BuildContext context) {
+            return Ask_again(message: "정말 로그아웃 하시겠습니까?");
+          },
+        );
+
+        // 확인 버튼 클릭 시 로그아웃 실행
+        if (result == 1) {
+          logout(context);
+        }
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 2.0),

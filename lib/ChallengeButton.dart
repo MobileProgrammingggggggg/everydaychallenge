@@ -3,7 +3,7 @@ import 'package:test_flutter/themes/colors.dart';
 import 'Roulette_test.dart';
 import 'Success_screen.dart';
 import 'Failure_screen.dart';
-import 'ask_again_screen.dart';
+import 'Ask_again_screen.dart';
 
 class ChallengeButton extends StatefulWidget {
   @override
@@ -66,7 +66,7 @@ class _ChallengeButtonState extends State<ChallengeButton> {
                     int? result = await showDialog<int>(
                       context: context,
                       builder: (BuildContext context) {
-                        return ask_again(message: "정말 성공하셨습니까?");
+                        return Ask_again(message: "정말 성공하셨습니까?");
                       },
                     );
 
@@ -103,7 +103,7 @@ class _ChallengeButtonState extends State<ChallengeButton> {
                     int? result = await showDialog<int>(
                       context: context,
                       builder: (BuildContext context) {
-                        return ask_again(message: "정말 실패하셨습니까?");
+                        return Ask_again(message: "정말 실패하셨습니까?");
                       },
                     );
 

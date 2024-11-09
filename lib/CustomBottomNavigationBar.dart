@@ -1,10 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:test_flutter/ranking_screen.dart';
-import 'package:test_flutter/store_screen.dart';
+import 'package:test_flutter/Ranking_screen.dart';
+import 'package:test_flutter/Store_screen.dart';
 
 import 'Main_test.dart';
-import 'calendar_screen.dart';
+import 'Calendar_screen.dart';
 import 'Community_Screen.dart';
 
 class CustomBottomNavigationBar extends StatelessWidget {
