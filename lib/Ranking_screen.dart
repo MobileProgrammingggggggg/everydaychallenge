@@ -8,13 +8,21 @@ import 'CustomBottomNavigationBar.dart';
 class RankingScreen extends StatelessWidget {
   get random => null;
 
+  get title => null;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.pink[100],
         elevation: 0,
         title: Text(
           "랭킹",
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
       ),
@@ -23,14 +31,8 @@ class RankingScreen extends StatelessWidget {
           // 탭 버튼
         Container(
           padding: EdgeInsets.symmetric(vertical: 15),
-          color: AppColors.cream,
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildTabButton(context, '월간', true, width: 160), // 버튼길이 수정
-              SizedBox(width: 50), // 버튼 간격
-              _buildTabButton(context, '종합', false, width: 160),
-          ],
+            mainAxisAlignment: MainAxisAlignment.center
         ),
       ),
 
@@ -38,7 +40,7 @@ class RankingScreen extends StatelessWidget {
     // 상위 3명의 랭킹
           Container(
 
-            color: AppColors.cream,
+
             padding: EdgeInsets.symmetric(vertical: 20),
 
             child: Row(
@@ -54,6 +56,7 @@ class RankingScreen extends StatelessWidget {
           //  나머지 랭킹 리스트
           Expanded(
             child: ListView(
+              padding: EdgeInsets.all(16.0),
               children: List.generate(10, (index) {
                 return _buildRankRow(index + 4, 'user',  0);
               }),
@@ -65,14 +68,16 @@ class RankingScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTabButton(BuildContext context, String text, bool isSelected, {double width = 100}) {
+
+
+  /*Widget _buildTabButton(BuildContext context, String text, bool isSelected, {double width = 100}) {
     return GestureDetector(
       onTap: () {},
       child: Container(
         width: width,
         padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.brightPink : AppColors.deepBlue,
+          color: isSelected ? Colors.pink[200] : Colors.blue[200],
           borderRadius: BorderRadius.circular(20),
         ),
         child: Center(
@@ -87,7 +92,7 @@ class RankingScreen extends StatelessWidget {
       ),
       )
     );
-  }
+  }*/
 
   Widget _buildTopRankItem(int rank, String name, String score, Color color, {bool isCrowned = false}) {
     return Column(
@@ -113,13 +118,14 @@ class RankingScreen extends StatelessWidget {
     return ListTile(
       leading: CircleAvatar(
         backgroundColor: Colors.grey.shade300,
-        child: Text(name[0]), // 간단한 이름의 첫 글자
+        child: Text(name[0]),  // 첫 글자만 표시
       ),
-      title: Text(name),
+      title: Text(name), // 이름 전체 표시
       trailing: Text(
-        '$score',
+        '$score', // 점수 표시
         style: TextStyle(color: Colors.black),
       ),
     );
   }
+
 }

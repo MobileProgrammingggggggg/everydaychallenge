@@ -161,7 +161,13 @@ class CommunityScreen extends StatelessWidget {
         theme: ThemeData(primarySwatch: Colors.blue),
         home: Scaffold(
             appBar: AppBar(
-              title: Text('커뮤니티 게시판'),
+              backgroundColor: Colors.pink[100],
+              title: Text('커뮤니티 게시판',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),),
               leading: IconButton(
                 icon: Icon(Icons.arrow_back), // 뒤로가기 직접 추가
                 onPressed: () {
