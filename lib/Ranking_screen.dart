@@ -39,8 +39,6 @@ class RankingScreen extends StatelessWidget {
 
     // 상위 3명의 랭킹
           Container(
-
-
             padding: EdgeInsets.symmetric(vertical: 20),
 
             child: Row(
@@ -52,7 +50,12 @@ class RankingScreen extends StatelessWidget {
               ],
             ),
           ),
-
+          Divider(
+          color: Colors.grey.shade300,       // 선의 색상
+          thickness: 2,             // 선의 두께
+          indent: 16,               // 시작 지점 여백 (왼쪽 여백)
+          endIndent: 16,            // 끝 지점 여백 (오른쪽 여백)
+          ),
           //  나머지 랭킹 리스트
           Expanded(
             child: ListView(
