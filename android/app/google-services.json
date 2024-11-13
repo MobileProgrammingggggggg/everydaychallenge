@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1060332507802",
+    "project_id": "everydaychallenge-3687b",
+    "storage_bucket": "everydaychallenge-3687b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1060332507802:android:bba3e3301f6dbb69a9c523",
+        "android_client_info": {
+          "package_name": "com.example.everdaychallenge"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZ47ZVlzQqp2XINSp9ihRl_XuP14FQuCc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1060332507802:android:54e2b6427a47e4a2a9c523",
+        "android_client_info": {
+          "package_name": "com.example.everydaychallenge"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZ47ZVlzQqp2XINSp9ihRl_XuP14FQuCc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
