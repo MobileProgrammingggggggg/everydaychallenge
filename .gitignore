@@ -42,5 +42,6 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+
+### dotenv ###
 .env
-/assets/.env
