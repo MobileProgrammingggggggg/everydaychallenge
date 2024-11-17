@@ -6,6 +6,7 @@ class Notification_Screen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text("알림"),
+        backgroundColor: Colors.pink[100], // AppBar 배경색 변경
       ),
       body: ListView(
         children: [
