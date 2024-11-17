@@ -3,6 +3,7 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -48,29 +49,47 @@ class DefaultFirebaseOptions {
   }
 
   // 웹 설정 추가
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDeOkZIY4GrflnujF4BFTAtAyr2UaoThhY',
-    appId: '1:1060332507802:web:8ce54bf3e6f82ae2a9c523',
-    messagingSenderId: 'your-web-messaging-sender-id',
-    projectId: 'your-project-id',
-    authDomain: 'your-project-id.firebaseapp.com',
-    storageBucket: 'your-project-id.appspot.com',
-  );
+  static FirebaseOptions get web {
+    final API_KEY = dotenv.env['WEB_API_KEY'];
+    if (API_KEY == null) {
+      throw Exception("WEB_API_KEY 환경 변수가 설정되어 있지 않습니다.");
+    }
+    return FirebaseOptions(
+      apiKey: API_KEY,
+      appId: '1:1060332507802:web:8ce54bf3e6f82ae2a9c523',
+      messagingSenderId: '1060332507802',
+      projectId: 'everydaychallenge-3687b',
+      authDomain: 'everydaychallenge-3687b.firebaseapp.com',
+      storageBucket: 'everydaychallenge-3687b.appspot.com',
+    );
+  }
 
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDZ47ZVlzQqp2XINSp9ihRl_XuP14FQuCc',
-    appId: '1:1060332507802:android:bba3e3301f6dbb69a9c523',
-    messagingSenderId: '1060332507802',
-    projectId: 'everydaychallenge-3687b',
-    storageBucket: 'everydaychallenge-3687b.appspot.com',
-  );
+  static FirebaseOptions get android {
+    final API_KEY = dotenv.env['ANDROID_API_KEY'];
+    if (API_KEY == null) {
+      throw Exception("ANDROID_API_KEY 환경 변수가 설정되어 있지 않습니다.");
+    }
+    return FirebaseOptions(
+      apiKey: API_KEY,
+      appId: '1:1060332507802:android:bba3e3301f6dbb69a9c523',
+      messagingSenderId: '1060332507802',
+      projectId: 'everydaychallenge-3687b',
+      storageBucket: 'everydaychallenge-3687b.appspot.com',
+    );
+  }
 
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCp5Oq0zWVyP8qU6E3Zs2oEOKgRKxLfAjA',
-    appId: '1:1060332507802:ios:bb95011052ad118da9c523',
-    messagingSenderId: '1060332507802',
-    projectId: 'everydaychallenge-3687b',
-    storageBucket: 'everydaychallenge-3687b.appspot.com',
-    iosBundleId: 'com.example.testFlutter',
-  );
+  static FirebaseOptions get ios {
+    final API_KEY = dotenv.env['IOS_API_KEY'];
+    if (API_KEY == null) {
+      throw Exception("IOS_API_KEY 환경 변수가 설정되어 있지 않습니다.");
+    }
+    return FirebaseOptions(
+      apiKey: API_KEY,
+      appId: '1:1060332507802:ios:bb95011052ad118da9c523',
+      messagingSenderId: '1060332507802',
+      projectId: 'everydaychallenge-3687b',
+      storageBucket: 'everydaychallenge-3687b.appspot.com',
+      iosBundleId: 'com.example.testFlutter',
+    );
+  }
 }
