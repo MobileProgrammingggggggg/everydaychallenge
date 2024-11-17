@@ -55,6 +55,7 @@ class SignUpScreen extends StatelessWidget {
       _showErrorDialog(context, '회원가입 성공! 로그인 화면으로 이동하세요.');
       Navigator.pop(context); // 로그인 화면으로 이동
     } on FirebaseAuthException catch (e) {
+      print('Firebase Auth Error: ${e.code}');  // 에러 코드 출력
       if (e.code == 'email-already-in-use') {
         _showErrorDialog(context, '이미 등록된 이메일입니다.');
       } else if (e.code == 'weak-password') {

@@ -13,7 +13,9 @@ import 'firebase_initializer.dart';
 // 메인 화면
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initializeFirebase();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,  // 웹에서 FirebaseOptions을 가져옵니다.
+  );
   runApp(MyApp());
 }
 

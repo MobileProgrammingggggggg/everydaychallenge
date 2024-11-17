@@ -49,8 +49,8 @@ class DefaultFirebaseOptions {
 
   // 웹 설정 추가
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'your-web-api-key',
-    appId: 'your-web-app-id',
+    apiKey: 'AIzaSyDeOkZIY4GrflnujF4BFTAtAyr2UaoThhY',
+    appId: '1:1060332507802:web:8ce54bf3e6f82ae2a9c523',
     messagingSenderId: 'your-web-messaging-sender-id',
     projectId: 'your-project-id',
     authDomain: 'your-project-id.firebaseapp.com',
