@@ -5,11 +5,15 @@ import 'Login_screen.dart';
 import 'ChallengeButton.dart';
 import 'Ask_again_screen.dart';
 import 'Notification_Screen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'firebase_initializer.dart';
 // import 'Community_Screen.dart';
 
 // 메인 화면
-void main() {
-  //runApp(Login());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeFirebase();
   runApp(MyApp());
 }
 

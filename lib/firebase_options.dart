@@ -17,10 +17,8 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      // 웹 설정 추가
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -30,17 +28,17 @@ class DefaultFirebaseOptions {
       case TargetPlatform.macOS:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
+              'you can reconfigure this by running the FlutterFire CLI again.',
         );
       case TargetPlatform.windows:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
+              'you can reconfigure this by running the FlutterFire CLI again.',
         );
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
+              'you can reconfigure this by running the FlutterFire CLI again.',
         );
       default:
         throw UnsupportedError(
@@ -49,12 +47,22 @@ class DefaultFirebaseOptions {
     }
   }
 
+  // 웹 설정 추가
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'your-web-api-key',
+    appId: 'your-web-app-id',
+    messagingSenderId: 'your-web-messaging-sender-id',
+    projectId: 'your-project-id',
+    authDomain: 'your-project-id.firebaseapp.com',
+    storageBucket: 'your-project-id.appspot.com',
+  );
+
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyDZ47ZVlzQqp2XINSp9ihRl_XuP14FQuCc',
     appId: '1:1060332507802:android:bba3e3301f6dbb69a9c523',
     messagingSenderId: '1060332507802',
     projectId: 'everydaychallenge-3687b',
-    storageBucket: 'everydaychallenge-3687b.firebasestorage.app',
+    storageBucket: 'everydaychallenge-3687b.appspot.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -62,8 +70,7 @@ class DefaultFirebaseOptions {
     appId: '1:1060332507802:ios:bb95011052ad118da9c523',
     messagingSenderId: '1060332507802',
     projectId: 'everydaychallenge-3687b',
-    storageBucket: 'everydaychallenge-3687b.firebasestorage.app',
+    storageBucket: 'everydaychallenge-3687b.appspot.com',
     iosBundleId: 'com.example.testFlutter',
   );
-
 }
