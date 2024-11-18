@@ -121,12 +121,14 @@ class PostController extends GetxController {
   void addComment(int postIndex, Map<String, String> comment) {
     posts[postIndex]['comments'].add(comment);
     posts[postIndex]['comments'].refresh(); // 댓글 리스트 갱신
+    posts.refresh(); // RxList 상태 변경 후 refresh 호출
   }
 
   // 댓글 삭제 메서드
   void deleteComment(int postIndex, int commentIndex) {
     posts[postIndex]['comments'].removeAt(commentIndex);
     posts[postIndex]['comments'].refresh(); // 댓글 리스트 갱신
+    posts.refresh(); // RxList 상태 변경 후 refresh 호출
   }
 
   // 조회수 증가 메서드
