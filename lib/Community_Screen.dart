@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'CustomBottomNavigationBar.dart';
 import 'Error_screen.dart';
 import 'Main_test.dart';
+import 'package:get/get.dart';
 // import 'Ask_again_screen.dart';
 // import 'package:test_flutter/themes/colors.dart';
 
