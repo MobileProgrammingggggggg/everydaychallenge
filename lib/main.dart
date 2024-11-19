@@ -5,15 +5,25 @@ import 'package:flutter/material.dart';
 import 'Main_test.dart';
 
 //main 파일 이름 변경, 삭제 노노
-void main() async  {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // dotenv 초기화
-  await dotenv.load(fileName: ".env");
+  try {
+    await dotenv.load(fileName: "assets/.env");
+  } catch (e) {
+    print("Failed to load .env file: $e");
+  }
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  // Firebase 초기화
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    print("Failed to initialize Firebase: $e");
+  }
+
   runApp(MyApp());
 }
 
