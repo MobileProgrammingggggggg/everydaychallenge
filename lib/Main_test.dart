@@ -121,40 +121,50 @@ class LogoutIcon extends StatelessWidget {
   }
 }
 
-class NotificationIcon extends StatelessWidget {
+class NotificationIcon extends StatefulWidget {
+  @override
+  _NotificationIconState createState() => _NotificationIconState();
+}
+
+class _NotificationIconState extends State<NotificationIcon> {
+  int notificationCount = 3; // 초기 알림 갯수 설정
+
   @override
   Widget build(BuildContext context) {
     return Stack(
-      alignment: Alignment.topRight,
+      clipBehavior: Clip.none, // 아이콘이 겹쳐 보이도록 클리핑 비활성화
+      alignment: Alignment.center,
       children: [
         IconButton(
           icon: Icon(Icons.notifications, color: Colors.black),
-          onPressed: () {
-            Navigator.push(
+          onPressed: () async {
+            await Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => Notification_Screen()), // NotificationScreen으로 이동
+              MaterialPageRoute(builder: (context) => Notification_Screen()),
             );
+            setState(() {
+              notificationCount = 0; // 알림 갯수 초기화
+            });
           },
         ),
-        Positioned(
-          right: 10,
-          top: 10,
-          child: Container(
-            padding: EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              color: Colors.red,
-              shape: BoxShape.circle,
-            ),
-            child: Text(
-              "1",
-              style: TextStyle(color: Colors.white, fontSize: 10),
+        if (notificationCount > 0)
+          Positioned(
+            right: 4, // 아이콘의 오른쪽 상단으로 이동
+            top: 4,
+            child: CircleAvatar(
+              radius: 8,
+              backgroundColor: Colors.red,
+              child: Text(
+                '$notificationCount',
+                style: TextStyle(color: Colors.white, fontSize: 12),
+              ),
             ),
           ),
-        ),
       ],
     );
   }
 }
+
 
 class GradientBackground extends StatelessWidget {
   final Widget child;
