@@ -35,11 +35,35 @@ class _StoreScreenState extends State<StoreScreen> {
       if (value == 1) {
         if (points >= itemCost) {
           _buyItem(itemName, itemCost);
+          _showSuccessDialog(context, itemName);
         } else {
-          print("포인트가 부족합니다.");
+          showDialog(
+            context: context,
+            builder: (context) => Ask_again(
+              message: "포인트가 부족합니다.",
+            ),
+          );
         }
       }
     });
+  }
+
+  void _showSuccessDialog(BuildContext context, String itemName) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("구매 완료"),
+        content: Text("$itemName 구매가 완료되었습니다."),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text("확인"),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildPurchasedItems() {
