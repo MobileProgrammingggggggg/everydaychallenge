@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
-import 'Notification_Screen.dart';  // 올바르게 Notification_Screen 파일을 임포트합니다.
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Notification_Screen extends StatefulWidget {
+  final String userId;
+
+  Notification_Screen({required this.userId}); // 유저 ID를 전달받도록 수정
+
   @override
   _Notification_ScreenState createState() => _Notification_ScreenState();
 }
+
 
 class _Notification_ScreenState extends State<Notification_Screen> {
   int notificationCount = 5; // 초기 알림 갯수 설정
@@ -15,6 +20,20 @@ class _Notification_ScreenState extends State<Notification_Screen> {
     });
   }
 
+  // 남은 시간 계산 메서드
+  String _formatRemainingTime(Timestamp deadline) {
+    final DateTime deadlineTime = deadline.toDate();
+    final Duration difference = deadlineTime.difference(DateTime.now());
+
+    if (difference.isNegative) {
+      return "챌린지 마감 시간이 지났습니다!";
+    } else {
+      final hours = difference.inHours;
+      final minutes = difference.inMinutes % 60;
+      return "마감까지 ${hours}시간 ${minutes}분 남았습니다!";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -22,61 +41,75 @@ class _Notification_ScreenState extends State<Notification_Screen> {
         title: Text("알림"),
         backgroundColor: Colors.pink[100],
       ),
-      body: ListView(
-        children: [
-          NotificationCard(
-            icon: Icons.emoji_events,
-            title: "3일 연속 성공!",
-            description: "당신의 열정이 빛나고 있어요!",
-            time: "방금 전",
-            titleStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            descriptionStyle: TextStyle(color: Colors.grey[700], fontSize: 14),
-            timeStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
-          ),
-          NotificationCard(
-            icon: Icons.hourglass_bottom,
-            title: "챌린지 마감 3시간 전",
-            description: "마감까지 3시간 남았습니다! 지금 도전하세요!",
-            time: "3시간 전",
-            titleStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            descriptionStyle: TextStyle(color: Colors.grey[700], fontSize: 14),
-            timeStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
-          ),
-          NotificationCard(
-            icon: Icons.flag,
-            title: "오늘 챌린지 시작!",
-            description: "오늘의 챌린지가 시작됐습니다! 도전을 기다리고 있어요!",
-            time: "오늘",
-            titleStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            descriptionStyle: TextStyle(color: Colors.grey[700], fontSize: 14),
-            timeStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
-          ),
-          NotificationCard(
-            icon: Icons.shopping_cart,
-            title: "상점에 새로운 아이템 입고",
-            description: "새로운 아이템이 상점에 도착했습니다! 지금 확인해보세요!",
-            time: "1시간 전",
-            titleStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            descriptionStyle: TextStyle(color: Colors.grey[700], fontSize: 14),
-            timeStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
-          ),
-          NotificationCard(
-            icon: Icons.insert_chart,
-            title: "주간요약",
-            description: "한 주간의 성과를 확인하세요! 멋진 한 주였어요!",
-            time: "어제",
-            titleStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            descriptionStyle: TextStyle(color: Colors.grey[700], fontSize: 14),
-            timeStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
-          ),
-        ],
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('notifications')
+            .doc(widget.userId)
+            .collection('user_notifications')
+            .orderBy('timestamp', descending: true)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
+
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Center(
+              child: Text(
+                'No notifications available.',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+            );
+          }
+
+          return ListView(
+            children: snapshot.data!.docs.map((doc) {
+              final String title = doc['title'] ?? "Untitled Notification";
+              final String description = doc['message'] ?? "No details.";
+              final Timestamp? timestamp = doc['timestamp'];
+              final String time = timestamp != null
+                  ? _formatRemainingTime(timestamp) // 남은 시간 계산 호출
+                  : "Unknown Time";
+              final IconData icon = _getIcon(doc['type'] ?? 'default');
+
+              return NotificationCard(
+                icon: icon,
+                title: title,
+                description: description,
+                time: time,
+                titleStyle:
+                TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                descriptionStyle:
+                TextStyle(color: Colors.grey[700], fontSize: 14),
+                timeStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
+              );
+            }).toList(),
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _clearNotifications, // 알림 갯수 초기화 메서드 연결
+        onPressed: _clearNotifications,
         child: Icon(Icons.clear_all),
         backgroundColor: Colors.pink[100],
       ),
     );
+  }
+
+  IconData _getIcon(String type) {
+    switch (type) {
+      case 'success':
+        return Icons.emoji_events;
+      case 'challenge_deadline':
+        return Icons.hourglass_bottom;
+      case 'challenge_start':
+        return Icons.flag;
+      case 'new_items':
+        return Icons.shopping_cart;
+      case 'weekly_summary':
+        return Icons.insert_chart;
+      default:
+        return Icons.notifications;
+    }
   }
 }
 
@@ -133,41 +166,6 @@ class NotificationCard extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class NotificationIcon extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.topRight,
-      children: [
-        IconButton(
-          icon: Icon(Icons.notifications, color: Colors.black),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => Notification_Screen()), // 올바르게 Notification_Screen 클래스를 참조합니다.
-            );
-          },
-        ),
-        Positioned(
-          right: 10,
-          top: 10,
-          child: Container(
-            padding: EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              color: Colors.red,
-              shape: BoxShape.circle,
-            ),
-            child: Text(
-              "1",
-              style: TextStyle(color: Colors.white, fontSize: 10),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

@@ -9,7 +9,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'firebase_initializer.dart';
 import 'package:get/get.dart';
-// import 'Community_Screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 // 메인 화면
 void main() async {
@@ -25,37 +26,97 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false, // 디버그 버튼 가리기
-      home: ChallengeScreen(),
+      home: AuthWrapper(),
     );
   }
 }
 
-class ChallengeScreen extends StatelessWidget {
+class AuthWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      appBar: CustomAppBar(),
-      body: GradientBackground(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              HeaderSection(),
-              SizedBox(height: 20), // 위젯 간의 간격
-              CountdownText(),
-              SizedBox(height: 20), // 위젯 간의 간격
-              CharacterImage(),
-              SizedBox(height: 20), // 위젯 간의 간격
-              ChallengePrompt(),
-              SizedBox(height: 20), // 위젯 간의 간격
-              ChallengeButton(),
-              SizedBox(height: 100), // 하단 여백
-            ],
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(), // Firebase 인증 상태 스트림
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(
+            body: Center(child: CircularProgressIndicator()), // 로딩 중
+          );
+        }
+        if (snapshot.hasData && snapshot.data != null) {
+          // 로그인된 사용자의 userId를 ChallengeScreen에 전달
+          return ChallengeScreen(userId: snapshot.data!.uid); // 반드시 userId 전달
+        }
+        return LoginScreen(); // 로그인되지 않은 상태면 로그인 화면으로 이동
+      },
+    );
+  }
+}
+
+class ChallengeScreen extends StatefulWidget {
+  final String userId;
+
+  ChallengeScreen({required this.userId});
+
+  @override
+  _ChallengeScreenState createState() => _ChallengeScreenState();
+}
+
+class _ChallengeScreenState extends State<ChallengeScreen> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  DocumentSnapshot<Map<String, dynamic>>? userData;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  void _loadUserData() async {
+    try {
+      // 전달받은 userId를 사용하여 사용자 데이터 로드
+      DocumentSnapshot<Map<String, dynamic>> data = await _firestore.collection('users').doc(widget.userId).get();
+      setState(() {
+        userData = data;
+      });
+    } catch (e) {
+      print("Error loading user data: $e");
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (userData == null) {
+      // 데이터를 불러오는 중일 때 로딩 화면 표시
+      return Scaffold(
+        appBar: CustomAppBar(),
+        body: Center(child: CircularProgressIndicator()), // 로딩 인디케이터
+      );
+    } else {
+      // 데이터가 로드되었을 때 UI 표시
+      return Scaffold(
+        resizeToAvoidBottomInset: false,
+        appBar: CustomAppBar(),
+        body: GradientBackground(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                HeaderSection(userData: userData!),
+                SizedBox(height: 20), // 위젯 간의 간격
+                CountdownText(userData: userData!),
+                SizedBox(height: 20), // 위젯 간의 간격
+                CharacterImage(),
+                SizedBox(height: 20), // 위젯 간의 간격
+                ChallengePrompt(),
+                SizedBox(height: 20), // 위젯 간의 간격
+                ChallengeButton(),
+                SizedBox(height: 100), // 하단 여백
+              ],
+            ),
           ),
         ),
-      ),
-      bottomNavigationBar: CustomBottomNavigationBar(),
-    );
+        bottomNavigationBar: CustomBottomNavigationBar(),
+      );
+    }
   }
 }
 
@@ -66,7 +127,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        title:  Image.asset(
+        title: Image.asset(
           'assets/images/logo.png', // 이미지 경로
           height: 70, // 이미지 높이 설정
           width: 200,
@@ -94,7 +155,11 @@ class LogoutIcon extends StatelessWidget {
 
         // 확인 버튼 클릭 시 로그아웃 실행
         if (result == 1) {
-          logout(context);
+          FirebaseAuth.instance.signOut(); // Firebase 로그아웃
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => LoginScreen()), // 로그인 화면으로 이동
+          );
         }
       },
       child: Padding(
@@ -110,13 +175,6 @@ class LogoutIcon extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-
-  void logout(BuildContext context) {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => LoginScreen()), // 로그인 화면으로 이동
     );
   }
 }
@@ -138,13 +196,20 @@ class _NotificationIconState extends State<NotificationIcon> {
         IconButton(
           icon: Icon(Icons.notifications, color: Colors.black),
           onPressed: () async {
-            await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => Notification_Screen()),
-            );
-            setState(() {
-              notificationCount = 0; // 알림 갯수 초기화
-            });
+            User? currentUser = FirebaseAuth.instance.currentUser;
+            if (currentUser != null) {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => Notification_Screen(userId: currentUser.uid), // userId 전달
+                ),
+              );
+              setState(() {
+                notificationCount = 0; // 알림 갯수 초기화
+              });
+            } else {
+              print("User is not logged in.");
+            }
           },
         ),
         if (notificationCount > 0)
@@ -164,7 +229,6 @@ class _NotificationIconState extends State<NotificationIcon> {
     );
   }
 }
-
 
 class GradientBackground extends StatelessWidget {
   final Widget child;
@@ -189,6 +253,10 @@ class GradientBackground extends StatelessWidget {
 }
 
 class HeaderSection extends StatelessWidget {
+  final DocumentSnapshot<Map<String, dynamic>> userData;
+
+  HeaderSection({required this.userData});
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -201,7 +269,7 @@ class HeaderSection extends StatelessWidget {
               Icon(Icons.star, color: AppColors.textBlue),
               SizedBox(width: 5),
               Text(
-                "300 P",
+                "${userData.data()?['points'] ?? '300'} P", // Firestore에서 포인트 가져오기
                 style: TextStyle(
                   color: Colors.black,
                   fontWeight: FontWeight.bold,
@@ -212,11 +280,11 @@ class HeaderSection extends StatelessWidget {
           Column(
             children: [
               Text(
-                "D + 9",
+                "D + ${userData.data()?['days'] ?? 9}", // Firestore에서 D+일 수 가져오기
                 style: TextStyle(color: AppColors.textBlue, fontSize: 18),
               ),
               Text(
-                "달성률: 98%",
+                "달성률: ${userData.data()?['achievementRate'] ?? 98}%",
                 style: TextStyle(color: AppColors.textBlue),
               ),
             ],
@@ -228,10 +296,14 @@ class HeaderSection extends StatelessWidget {
 }
 
 class CountdownText extends StatelessWidget {
+  final DocumentSnapshot<Map<String, dynamic>> userData;
+
+  CountdownText({required this.userData});
+
   @override
   Widget build(BuildContext context) {
     return Text(
-      "7시간 56분 남았습니다.",
+      "${userData.data()?['remainingTime'] ?? '7시간 56분'} 남았습니다.", // Firestore에서 남은 시간 가져오기
       style: TextStyle(
         color: AppColors.textBlue,
         fontSize: 24,
