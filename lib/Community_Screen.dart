@@ -174,7 +174,7 @@ class CommunityScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => MyApp()),
+                    MaterialPageRoute(builder: (context) => ChallengeScreen()),
                   );
                 },
               ),

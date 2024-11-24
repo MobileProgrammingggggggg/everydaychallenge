@@ -43,6 +43,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   confetti: ^0.8.0
   get: ^4.6.6
+  shared_preferences: ^2.3.3
 
 dev_dependencies:
   flutter_test:

@@ -30,7 +30,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
           case 0:
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => MyApp()),
+              MaterialPageRoute(builder: (context) => ChallengeScreen()),
             );
             break;
           case 1:

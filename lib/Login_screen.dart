@@ -60,7 +60,8 @@ class LoginScreen extends StatelessWidget {
       // 로그인 성공 시 메인 화면으로 이동
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => MyApp()),
+        MaterialPageRoute(builder: (context) => ChallengeScreen()),
+
       );
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {

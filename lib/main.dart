@@ -1,60 +1,71 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/material.dart';
 import 'firebase_options.dart';
-import 'Main_test.dart'; // ChallengeScreen이 정의된 파일을 임포트합니다.
-import 'Login_screen.dart'; // 로그인 화면 위젯 추가
+import 'Main_test.dart'; // ChallengeScreen 클래스가 포함된 파일 import
 
+// main.dart 파일 (Firebase 초기화 및 최상위 위젯 설정)
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // dotenv 초기화
-  try {
-    await dotenv.load(fileName: "assets/.env");
-  } catch (e) {
-    print("Failed to load .env file: $e");
-  }
-
   // Firebase 초기화
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
+  runApp(AppInitializer());
+}
+
+class AppInitializer extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: initializeFirebase(),
+      builder: (context, snapshot) {
+        // Firebase 초기화 완료 여부 확인
+        if (snapshot.connectionState == ConnectionState.done) {
+          if (snapshot.hasError) {
+            // Firebase 초기화 중 오류가 발생한 경우
+            return MaterialApp(
+              home: Scaffold(
+                body: Center(
+                  child: Text('Firebase 초기화 실패: ${snapshot.error}'),
+                ),
+              ),
+            );
+          }
+          // Firebase 초기화가 성공한 경우 MyApp 실행
+          return MyApp();
+        }
+        // 초기화가 진행 중인 경우 로딩 화면 표시
+        return MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          ),
+        );
+      },
     );
-  } catch (e) {
-    print("Failed to initialize Firebase: $e");
   }
 
-  runApp(MyApp());
+  Future<void> initializeFirebase() async {
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      print("Firebase 초기화 성공");
+    } catch (e) {
+      print("Firebase 초기화 실패: $e");
+      rethrow;
+    }
+  }
 }
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false, // 디버그 배너 숨기기
-      home: AuthWrapper(), // 인증 상태에 따라 화면 분기
-    );
-  }
-}
-
-class AuthWrapper extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(), // Firebase 인증 상태 스트림
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Scaffold(
-            body: Center(child: CircularProgressIndicator()), // 로딩 중
-          );
-        }
-        if (snapshot.hasData && snapshot.data != null) {
-          // 로그인된 사용자라면 userId를 ChallengeScreen에 전달
-          return ChallengeScreen(userId: snapshot.data!.uid);
-        }
-        return LoginScreen(); // 로그인되지 않은 상태면 로그인 화면으로
-      },
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: ChallengeScreen(), // 최상위 화면으로 ChallengeScreen 설정
     );
   }
 }
