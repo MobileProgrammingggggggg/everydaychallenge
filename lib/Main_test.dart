@@ -57,13 +57,16 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.pink[100],
         elevation: 0,
         centerTitle: true,
-        title:  Image.asset(
-          'assets/images/logo.png', // 이미지 경로
-          height: 70, // 이미지 높이 설정
-          width: 200,
+        title: Padding(
+          padding: const EdgeInsets.only(bottom: 10.0), // 아래 여백 추가
+          child: Image.asset(
+            'assets/images/image7.png', // 이미지 경로
+            height: 260, // 이미지 높이 조정
+            fit: BoxFit.contain,
+          ),
         ),
         leading: LogoutIcon(),
         actions: [NotificationIcon()]);

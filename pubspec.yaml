@@ -82,6 +82,7 @@ flutter:
     - assets/images/left_good.png
     - assets/images/right_good.png
     - assets/images/twerking.gif
+    - assets/images/image7.png
     - assets/.env
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
