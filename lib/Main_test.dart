@@ -53,28 +53,42 @@ class AuthenticationWrapper extends StatelessWidget {
   }
 }
 
+
+
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-        backgroundColor: Colors.pink[100],
-        elevation: 0,
-        centerTitle: true,
-        title: Padding(
-          padding: const EdgeInsets.only(bottom: 10.0), // 아래 여백 추가
-          child: Image.asset(
-            'assets/images/image7.png', // 이미지 경로
-            height: 260, // 이미지 높이 조정
-            fit: BoxFit.contain,
+    return Column(
+      mainAxisSize: MainAxisSize.min, // Column의 높이를 최소화
+      children: [
+        AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          centerTitle: true,
+          title: Padding(
+            padding: const EdgeInsets.only(bottom: 3.0), // 아래 여백 추가
+            child: Image.asset(
+              'assets/images/image7.png', // 이미지 경로
+              height: 80, // 이미지 높이 조정
+              fit: BoxFit.contain,
+            ),
           ),
+          leading: LogoutIcon(),
+          actions: [NotificationIcon()],
         ),
-        leading: LogoutIcon(),
-        actions: [NotificationIcon()]);
+        //Divider(
+         // thickness: 1, // 선의 두께 설정
+         // color: Colors.grey, // 선의 색상 설정
+         // height: 1, // Divider의 높이 추가
+        //),
+      ],
+    );
   }
 
   @override
-  Size get preferredSize => Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => Size.fromHeight(kToolbarHeight + 1); // 앱바 높이 + 구분선 두께
 }
+
 
 class LogoutIcon extends StatelessWidget {
   @override
@@ -125,7 +139,7 @@ class NotificationIcon extends StatelessWidget {
       alignment: Alignment.topRight,
       children: [
         IconButton(
-          icon: Icon(Icons.notifications, color: Colors.black),
+          icon: Icon(Icons.notifications, color: Colors.blue[700]),
           onPressed: () {
             Navigator.push(
               context,
@@ -134,8 +148,8 @@ class NotificationIcon extends StatelessWidget {
           },
         ),
         Positioned(
-          right: 10,
-          top: 10,
+          right: 8,
+          top: 8,
           child: Container(
             padding: EdgeInsets.all(2),
             decoration: BoxDecoration(
@@ -153,6 +167,11 @@ class NotificationIcon extends StatelessWidget {
   }
 }
 
+
+
+
+
+
 class GradientBackground extends StatelessWidget {
   final Widget child;
 
@@ -164,16 +183,26 @@ class GradientBackground extends StatelessWidget {
       width: double.infinity, // 가로를 무한대로 설정
       height: double.infinity, // 세로를 무한대로 설정
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.mainPink, AppColors.mainBlue],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
+        gradient: RadialGradient(
+          colors: [
+            Colors.pink[100]!, // 중앙의 핑크색
+            Colors.blue[100]!,      // 바깥쪽으로 갈수록 화이트
+          ],
+          center: Alignment.center, // 중앙에서부터 시작
+          radius: 1.0, // 그라데이션이 퍼지는 정도 (1.0은 전체 영역)
+          stops: [0.3, 1.0], // 색상이 변화하는 위치 설정 (0.3 위치까지 핑크)
         ),
       ),
       child: child,
     );
   }
 }
+
+
+
+
+
+
 
 class HeaderSection extends StatelessWidget {
   @override

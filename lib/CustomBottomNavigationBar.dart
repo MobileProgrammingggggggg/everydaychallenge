@@ -14,6 +14,8 @@ class CustomBottomNavigationBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed, // 간격 크기 고정
+
+
       items: [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: "홈"),
         BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: "캘린더"),
@@ -22,7 +24,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
         BottomNavigationBarItem(icon: Icon(Icons.chat), label: "커뮤니티"),
       ],
       selectedItemColor: Colors.blue,
-      unselectedItemColor: Colors.grey,
+      unselectedItemColor: Colors.black54,
       showUnselectedLabels: true, // 비선택 아이템의 라벨을 보여줌
       showSelectedLabels: true, // 선택 아이템의 라벨을 보여줌
       onTap: (index) {
