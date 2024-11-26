@@ -9,6 +9,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'firebase_initializer.dart';
 import 'package:get/get.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 // import 'Community_Screen.dart';
 
 // 메인 화면
@@ -25,12 +27,31 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false, // 디버그 버튼 가리기
-      home: ChallengeScreen(),
+      home:AuthenticationWrapper(),
     );
   }
 }
 
-
+class AuthenticationWrapper extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return CircularProgressIndicator(); // 로딩 중일 때 로딩 표시
+        }
+        if (snapshot.hasData) {
+          // 사용자가 로그인되어 있다면 ChallengeScreen으로 이동
+          return ChallengeScreen();
+        } else {
+          // 로그인하지 않은 경우 LoginScreen으로 이동
+          return LoginScreen();
+        }
+      },
+    );
+  }
+}
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
@@ -222,13 +243,76 @@ class ChallengeScreen extends StatefulWidget {
 
 class _ChallengeScreenState extends State<ChallengeScreen> {
   String selectedChallenge = "오늘의 챌린지는? ";
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // 챌린지 업데이트 메서드
-  void updateChallenge(String challenge) {
-    setState(() {
-      selectedChallenge = "오늘의 챌린지: $challenge";
-    });
+  @override
+  void initState() {
+    super.initState();
+    _loadChallenge();
   }
+
+  // Firestore에서 저장된 챌린지를 로드하는 메서드
+  void _loadChallenge() async {
+    User? currentUser = FirebaseAuth.instance.currentUser;
+
+    if (currentUser != null) {
+      String userId = currentUser.uid;
+
+      try {
+        DocumentSnapshot snapshot = await _firestore
+            .collection('users')
+            .doc(userId)
+            .get();
+
+        if (snapshot.exists && snapshot.data() != null) {
+          setState(() {
+            selectedChallenge = snapshot['selectedChallenge'] ?? "오늘의 챌린지는? ";
+          });
+        }
+      } catch (e) {
+        print("Failed to load challenge: $e");
+      }
+    } else {
+      print("No user is currently logged in");
+    }
+  }
+
+  // 챌린지 업데이트 및 Firestore에 저장하는 메서드
+  void updateChallenge(String challenge) async {
+    User? currentUser = FirebaseAuth.instance.currentUser;
+
+    if (currentUser != null) {
+      String userId = currentUser.uid;
+
+      DateTime currentDate = DateTime.now();
+      String formattedDate = "${currentDate.year}-${currentDate.month}-${currentDate.day}";
+
+      try {
+        await _firestore.collection('users').doc(userId).set(
+          {
+            'selectedChallenge': "오늘의 챌린지: $challenge",
+            'challengeDate': formattedDate,
+            'challengeSelected': true, // 챌린지가 선택되었음을 표시
+          },
+          SetOptions(merge: true),
+        );
+        print("Challenge updated successfully");
+
+        // 화면 전환 로직 - 챌린지 화면으로 이동
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => ChallengeScreen()), // 챌린지 화면으로 이동
+        );
+      } catch (e) {
+        print("Failed to save challenge: $e");
+      }
+    } else {
+      print("No user is currently logged in");
+    }
+  }
+
+
+
 
   @override
   Widget build(BuildContext context) {

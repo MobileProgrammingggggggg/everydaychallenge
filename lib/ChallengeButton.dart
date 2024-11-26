@@ -4,6 +4,9 @@ import 'Roulette_test.dart';
 import 'Success_screen.dart';
 import 'Failure_screen.dart';
 import 'Ask_again_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 
 class ChallengeButton extends StatefulWidget {
   final Function(String) onChallengeSelected; // 결과를 전달하기 위한 콜백 추가
@@ -14,7 +17,54 @@ class ChallengeButton extends StatefulWidget {
 }
 
 class _ChallengeButtonState extends State<ChallengeButton> {
-  int flag = 1; // 룰렛 사용 여부 확인
+  int flag = 1; // 기본 상태는 1 (챌린지 뽑기)
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFlag(); // Firebase에서 flag 상태 로드
+  }
+
+  // Firebase에서 flag 상태를 로드하는 메서드
+  void _loadFlag() async {
+    User? currentUser = FirebaseAuth.instance.currentUser;
+
+    if (currentUser != null) {
+      String userId = currentUser.uid;
+
+      try {
+        DocumentSnapshot snapshot = await _firestore.collection('users').doc(userId).get();
+
+        if (snapshot.exists && snapshot.data() != null) {
+          setState(() {
+            flag = snapshot['challengeFlag'] ?? 1; // Firebase에서 flag 값을 가져옴
+          });
+        }
+      } catch (e) {
+        print("Failed to load flag: $e");
+      }
+    }
+  }
+
+  // Firebase에 flag 상태를 저장하는 메서드
+  void _updateFlag(int newFlag) async {
+    User? currentUser = FirebaseAuth.instance.currentUser;
+
+    if (currentUser != null) {
+      String userId = currentUser.uid;
+
+      try {
+        await _firestore.collection('users').doc(userId).set(
+          {'challengeFlag': newFlag},
+          SetOptions(merge: true),
+        );
+        print("Flag updated successfully");
+      } catch (e) {
+        print("Failed to update flag: $e");
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +91,7 @@ class _ChallengeButtonState extends State<ChallengeButton> {
                     widget.onChallengeSelected(value); // onChallengeSelected 콜백 호출
                     setState(() {
                       flag = 2; // 상태 변경
+                      _updateFlag(flag); // Firebase에 flag 상태 업데이트
                     });
                   }
                 });
@@ -77,6 +128,7 @@ class _ChallengeButtonState extends State<ChallengeButton> {
                     if (result == 1) {
                       setState(() {
                         flag = 3; // 성공 상태로 변경
+                        _updateFlag(flag); // Firebase에 flag 상태 업데이트
                       });
                       Navigator.push(
                         context,
@@ -111,6 +163,7 @@ class _ChallengeButtonState extends State<ChallengeButton> {
                     if (result == 1) {
                       setState(() {
                         flag = 4; // 실패 상태로 변경
+                        _updateFlag(flag); // Firebase에 flag 상태 업데이트
                       });
                       Navigator.push(
                         context,
