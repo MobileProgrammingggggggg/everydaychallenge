@@ -30,34 +30,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class ChallengeScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      appBar: CustomAppBar(),
-      body: GradientBackground(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              HeaderSection(),
-              SizedBox(height: 20), // 위젯 간의 간격
-              CountdownText(),
-              SizedBox(height: 20), // 위젯 간의 간격
-              CharacterImage(),
-              SizedBox(height: 20), // 위젯 간의 간격
-              ChallengePrompt(),
-              SizedBox(height: 20), // 위젯 간의 간격
-              ChallengeButton(),
-              SizedBox(height: 100), // 하단 여백
-            ],
-          ),
-        ),
-      ),
-      bottomNavigationBar: CustomBottomNavigationBar(),
-    );
-  }
-}
+
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
@@ -121,50 +94,40 @@ class LogoutIcon extends StatelessWidget {
   }
 }
 
-class NotificationIcon extends StatefulWidget {
-  @override
-  _NotificationIconState createState() => _NotificationIconState();
-}
-
-class _NotificationIconState extends State<NotificationIcon> {
-  int notificationCount = 3; // 초기 알림 갯수 설정
-
+class NotificationIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Stack(
-      clipBehavior: Clip.none, // 아이콘이 겹쳐 보이도록 클리핑 비활성화
-      alignment: Alignment.center,
+      alignment: Alignment.topRight,
       children: [
         IconButton(
           icon: Icon(Icons.notifications, color: Colors.black),
-          onPressed: () async {
-            await Navigator.push(
+          onPressed: () {
+            Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => Notification_Screen()),
+              MaterialPageRoute(builder: (context) => Notification_Screen()), // NotificationScreen으로 이동
             );
-            setState(() {
-              notificationCount = 0; // 알림 갯수 초기화
-            });
           },
         ),
-        if (notificationCount > 0)
-          Positioned(
-            right: 4, // 아이콘의 오른쪽 상단으로 이동
-            top: 4,
-            child: CircleAvatar(
-              radius: 8,
-              backgroundColor: Colors.red,
-              child: Text(
-                '$notificationCount',
-                style: TextStyle(color: Colors.white, fontSize: 12),
-              ),
+        Positioned(
+          right: 10,
+          top: 10,
+          child: Container(
+            padding: EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              color: Colors.red,
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              "1",
+              style: TextStyle(color: Colors.white, fontSize: 10),
             ),
           ),
+        ),
       ],
     );
   }
 }
-
 
 class GradientBackground extends StatelessWidget {
   final Widget child;
@@ -252,11 +215,60 @@ class CharacterImage extends StatelessWidget {
   }
 }
 
+class ChallengeScreen extends StatefulWidget {
+  @override
+  _ChallengeScreenState createState() => _ChallengeScreenState();
+}
+
+class _ChallengeScreenState extends State<ChallengeScreen> {
+  String selectedChallenge = "오늘의 챌린지는? ";
+
+  // 챌린지 업데이트 메서드
+  void updateChallenge(String challenge) {
+    setState(() {
+      selectedChallenge = "오늘의 챌린지: $challenge";
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      resizeToAvoidBottomInset: false,
+      appBar: CustomAppBar(),
+      body: GradientBackground(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              HeaderSection(),
+              SizedBox(height: 20),
+              CountdownText(),
+              SizedBox(height: 20),
+              CharacterImage(),
+              SizedBox(height: 20),
+              ChallengePrompt(challengeText: selectedChallenge),
+              SizedBox(height: 20),
+              ChallengeButton(
+                onChallengeSelected: updateChallenge, // 콜백 전달
+              ),
+              SizedBox(height: 100),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: CustomBottomNavigationBar(),
+    );
+  }
+}
+
 class ChallengePrompt extends StatelessWidget {
+  final String challengeText;
+
+  ChallengePrompt({required this.challengeText});
+
   @override
   Widget build(BuildContext context) {
     return Text(
-      "오늘의 챌린지는?",
+      challengeText,
       style: TextStyle(
         color: AppColors.textBlue,
         fontSize: 18,

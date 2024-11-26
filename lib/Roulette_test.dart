@@ -1,10 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-//import 'package:particle_field/particle_field.dart';
-// 추후 particle 폭죽 이벤트 추가 예정
-
-// https://chowonpapa.tistory.com/entry/%EA%B0%81%EB%8F%84%EA%B3%84
-// 프로그래밍의 각도계 메커니즘...
 
 void main() {
   runApp(MaterialApp(home: Roulette()));
@@ -15,8 +10,7 @@ class Roulette extends StatefulWidget {
   _RouletteState createState() => _RouletteState();
 }
 
-class _RouletteState extends State<Roulette>
-    with SingleTickerProviderStateMixin {
+class _RouletteState extends State<Roulette> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   double _rotation = 0.0;
 
@@ -44,145 +38,51 @@ class _RouletteState extends State<Roulette>
     );
   }
 
-  bool _isSpinning = false; // 룰렛 회전 중인지 여부
+  bool _isSpinning = false;
 
   void startSpin() {
-    if (_isSpinning) return; // 이미 회전 중이면 실행하지 않음
-    _isSpinning = true; // 회전 시작 시 비활성화
+    if (_isSpinning || _controller.isAnimating) return; // 중복 방지
+    _isSpinning = true;
 
-    // 변수 정의
     const int minSpins = 4;
     const int maxSpins = 8;
-    const int spinDuration = 3000; // 애니메이션 지속 시간 (밀리초)
-    const double decelerationFactor = 0.2; // 감속 계수
-    const int resultDelay = 300; // 결과 메시지 지연 시간 (밀리초)
-
-    final spins =
-        Random().nextInt(maxSpins - minSpins + 1) + minSpins; // spins는 변위에서 랜덤
+    final spins = Random().nextInt(maxSpins - minSpins + 1) + minSpins;
     final totalRotation = spins * 2 * pi;
 
-    // 애니메이션 시작
     _controller.forward(from: 0);
     _controller.addListener(() {
       setState(() {
-        // 회전 속도를 줄여 자연스럽게 멈추도록 설정
-        double deceleration =
-            (maxSpins - _controller.value * (maxSpins - minSpins)) *
-                decelerationFactor; // 감속 조정
-        _rotation =
-            totalRotation * _controller.value * deceleration; // 회전 각도 업데이트
+        _rotation = totalRotation * _controller.value;
       });
     });
 
-    // 스피닝 종료 후 선택된 항목 표시
-    final duration =
-        spinDuration * (1 - (1 - _controller.value) * decelerationFactor);
-    Future.delayed(Duration(milliseconds: duration.round()), () {
-      _controller.stop();
-      final selectedItemIndex = calculateSelectedItemIndex();
-      // 선택된 항목 표시 메시지 지연
-      Future.delayed(Duration(milliseconds: resultDelay), () {
-        _isSpinning = false; // 회전 종료 시 활성화
-        setState(() {}); // 상태 업데이트
-        showSelectedItemDialog(context, selectedItemIndex);
-      });
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _controller.reset();
+        _isSpinning = false;
+
+        final selectedIndex = calculateSelectedItemIndex();
+        final selectedChallenge = items[selectedIndex];
+
+        Navigator.pop(context, selectedChallenge); // 결과 반환
+      }
     });
   }
 
+
+
+
+
+
+
   int calculateSelectedItemIndex() {
-    // 270도를 기준으로 인덱스 계산 ㅅㅂ!!
     return (((-(_rotation / (pi / 180)) + 270) % 360) ~/ 72) % items.length;
   }
 
   void showSelectedItemDialog(BuildContext context, int index) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: const BorderSide(color: Colors.black, width: 3),
-          ),
-          child: Stack(
-            children: [
-              // 배경 이미지 (좌측 하단으로 배치)
-              Positioned(
-                bottom: 3, // 하단에 배치
-                left: 0,   // 왼쪽에 배치
-                child: Image.asset(
-                  'assets/images/left_good.png', // 배경 이미지
-                  width: 120,
-                ),
-              ),
-              Positioned(
-                bottom: 3, // 하단에 배치
-                right: 0,   // 왼쪽에 배치
-                child: Image.asset(
-                  'assets/images/right_good.png', // 배경 이미지
-                  width: 120,
-                ),
-              ),
-              // 다이얼로그 내용 (문구와 텍스트)
-              Container(
-                width: 400, // 고정된 가로 크기
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // 상단에 추가된 문구 (둥근 배경 포함)
-                    Container(
-                      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 40),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE6C9D1), // 배경 색상
-                        borderRadius: BorderRadius.circular(20), // 둥근 모서리
-                      ),
-                      child: const Text(
-                        '오늘의 챌린지!!',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.pinkAccent, // 글씨 색상
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24), // 문구와 아이템 텍스트 사이의 간격
-                    // 아이템 텍스트
-                    Text(
-                      '${items[index]}',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.lightBlue,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 28,
-                      ),
-                    ),
-                    const SizedBox(height: 24), // 텍스트와 버튼 사이의 간격
-                    // 확인 버튼을 중앙에 배치
-                    Center(
-                      child: TextButton(
-                        style: TextButton.styleFrom(
-                          backgroundColor: const Color(0xFF5C67E3),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                        ),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        child: const Text(
-                          '확인',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+    final selectedChallenge = items[index];
+    // 선택된 항목을 Navigator.pop으로 반환
+
   }
 
   @override
@@ -198,13 +98,12 @@ class _RouletteState extends State<Roulette>
                 alignment: Alignment.topCenter,
                 children: [
                   Transform.rotate(
-                    angle: _rotation, // 현재 회전 각도
+                    angle: _rotation,
                     child: CustomPaint(
                       size: Size(300, 300),
                       painter: RoulettePainter(items, colors),
                     ),
                   ),
-                  // 역삼각형 마커
                   Positioned(
                     top: 0,
                     child: CustomPaint(
@@ -216,7 +115,7 @@ class _RouletteState extends State<Roulette>
               ),
               SizedBox(height: 20),
               ElevatedButton(
-                onPressed: _isSpinning ? null : startSpin, // 회전 중이면 비활성화
+                onPressed: _isSpinning ? null : startSpin,
                 child: Text("Spin"),
               ),
             ],
@@ -250,7 +149,6 @@ class RoulettePainter extends CustomPainter {
       final startAngle = (i * 72) * (pi / 180);
       final sweepAngle = (72 * pi / 180);
 
-      // 각 항목 그리기
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: radius),
         startAngle,
@@ -259,7 +157,6 @@ class RoulettePainter extends CustomPainter {
         paint,
       );
 
-      // 항목 텍스트 그리기
       final textPainter = TextPainter(
         text: TextSpan(
           text: items[i],
@@ -289,7 +186,6 @@ class TrianglePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..color = Colors.pink;
 
-    // 역삼각형 좌표
     final path = Path()
       ..moveTo(size.width / 2, 48)
       ..lineTo(0, size.height)

@@ -6,14 +6,15 @@ import 'Failure_screen.dart';
 import 'Ask_again_screen.dart';
 
 class ChallengeButton extends StatefulWidget {
+  final Function(String) onChallengeSelected; // 결과를 전달하기 위한 콜백 추가
+  ChallengeButton({required this.onChallengeSelected});
+
   @override
   _ChallengeButtonState createState() => _ChallengeButtonState();
 }
 
 class _ChallengeButtonState extends State<ChallengeButton> {
   int flag = 1; // 룰렛 사용 여부 확인
-  // 이 부분을 데이터베이스에서 가져와야 다른 화면에서 다시 불러와도 그 전 정보를 유지함.
-  // 화면을 새로 불러올때마다 flag 변수를 1로 설정하기 때문에 챌린지를 다시 뽑아야 하는것.
 
   @override
   Widget build(BuildContext context) {
@@ -31,19 +32,22 @@ class _ChallengeButtonState extends State<ChallengeButton> {
                 ),
               ),
               onPressed: () {
-                // flag 값을 0으로 변경하고 룰렛 화면으로 이동
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                      builder: (context) => Roulette()), // flag가 1일 때
-                );
-                setState(() {
-                  flag = 2; // 상태 변경
+                  MaterialPageRoute(builder: (context) => Roulette()),
+                ).then((value) {
+                  if (value != null) {
+                    // 룰렛 결과를 업데이트
+                    widget.onChallengeSelected(value); // onChallengeSelected 콜백 호출
+                    setState(() {
+                      flag = 2; // 상태 변경
+                    });
+                  }
                 });
               },
               child: Padding(
                 padding:
-                    const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
+                const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
                 child: Text(
                   "챌린지 뽑기",
                   style: TextStyle(color: Colors.white, fontSize: 16),
@@ -51,8 +55,9 @@ class _ChallengeButtonState extends State<ChallengeButton> {
               ),
             )
           else if (flag == 2) // flag가 2일 때 성공 및 실패 버튼 표시
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            Wrap(
+              spacing: 10, // 버튼 간의 간격
+              alignment: WrapAlignment.center, // 버튼 중앙 정렬
               children: [
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -62,7 +67,6 @@ class _ChallengeButtonState extends State<ChallengeButton> {
                     ),
                   ),
                   onPressed: () async {
-                    // 성공 버튼 클릭 시 확인 팝업
                     int? result = await showDialog<int>(
                       context: context,
                       builder: (BuildContext context) {
@@ -70,21 +74,19 @@ class _ChallengeButtonState extends State<ChallengeButton> {
                       },
                     );
 
-                    // 확인 버튼 클릭 시 성공 화면으로 이동
                     if (result == 1) {
                       setState(() {
-                        flag = 3; // 상태 변경
+                        flag = 3; // 성공 상태로 변경
                       });
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => Succeed()), // 성공 화면으로 이동
+                            builder: (context) => Succeed()), // 성공 화면 이동
                       );
                     }
                   },
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 15, horizontal: 30),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
                     child: Text(
                       "성공",
                       style: TextStyle(color: Colors.white, fontSize: 16),
@@ -99,7 +101,6 @@ class _ChallengeButtonState extends State<ChallengeButton> {
                     ),
                   ),
                   onPressed: () async {
-                    // 실패 버튼 클릭 시 확인 팝업
                     int? result = await showDialog<int>(
                       context: context,
                       builder: (BuildContext context) {
@@ -107,21 +108,19 @@ class _ChallengeButtonState extends State<ChallengeButton> {
                       },
                     );
 
-                    // 확인 버튼 클릭 시 실패 화면으로 이동
                     if (result == 1) {
                       setState(() {
-                        flag = 4; // 상태 변경
+                        flag = 4; // 실패 상태로 변경
                       });
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => Failed()), // 실패 화면으로 이동
+                            builder: (context) => Failed()), // 실패 화면 이동
                       );
                     }
                   },
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 15, horizontal: 30),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
                     child: Text(
                       "실패",
                       style: TextStyle(color: Colors.white, fontSize: 16),
@@ -130,7 +129,7 @@ class _ChallengeButtonState extends State<ChallengeButton> {
                 ),
               ],
             )
-          else // flag가 3또는 4일 때 성공 또는 실패 메시지 표시
+          else // flag가 3 또는 4일 때 성공 또는 실패 메시지 표시
             Text(
               flag == 3 ? "성공~!" : "실패ㅠ", // 조건에 따라 메시지 변경
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
