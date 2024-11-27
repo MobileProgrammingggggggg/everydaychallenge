@@ -270,7 +270,7 @@ class CommunityScreen extends StatelessWidget {
                 PaginationControls(),
               ],
             ),
-            bottomNavigationBar: CustomBottomNavigationBar(),
+            bottomNavigationBar: CustomBottomNavigationBar(currentIndex: 4),
           ),
         );
       },

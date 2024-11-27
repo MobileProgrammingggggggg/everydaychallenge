@@ -11,13 +11,16 @@ import 'firebase_initializer.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:math';
+import 'dart:async';
 // import 'Community_Screen.dart';
 
 // 메인 화면
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,  // 웹에서 FirebaseOptions을 가져옵니다.
+    options:
+        DefaultFirebaseOptions.currentPlatform, // 웹에서 FirebaseOptions을 가져옵니다.
   );
   runApp(MyApp());
 }
@@ -27,7 +30,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false, // 디버그 버튼 가리기
-      home:AuthenticationWrapper(),
+      home: AuthenticationWrapper(),
     );
   }
 }
@@ -53,8 +56,6 @@ class AuthenticationWrapper extends StatelessWidget {
   }
 }
 
-
-
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
@@ -77,18 +78,18 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           actions: [NotificationIcon()],
         ),
         //Divider(
-         // thickness: 1, // 선의 두께 설정
-         // color: Colors.grey, // 선의 색상 설정
-         // height: 1, // Divider의 높이 추가
+        // thickness: 1, // 선의 두께 설정
+        // color: Colors.grey, // 선의 색상 설정
+        // height: 1, // Divider의 높이 추가
         //),
       ],
     );
   }
 
   @override
-  Size get preferredSize => Size.fromHeight(kToolbarHeight + 1); // 앱바 높이 + 구분선 두께
+  Size get preferredSize =>
+      Size.fromHeight(kToolbarHeight + 1); // 앱바 높이 + 구분선 두께
 }
-
 
 class LogoutIcon extends StatelessWidget {
   @override
@@ -143,7 +144,9 @@ class NotificationIcon extends StatelessWidget {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => Notification_Screen()), // NotificationScreen으로 이동
+              MaterialPageRoute(
+                  builder: (context) =>
+                      Notification_Screen()), // NotificationScreen으로 이동
             );
           },
         ),
@@ -167,11 +170,6 @@ class NotificationIcon extends StatelessWidget {
   }
 }
 
-
-
-
-
-
 class GradientBackground extends StatelessWidget {
   final Widget child;
 
@@ -180,29 +178,22 @@ class GradientBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity, // 가로를 무한대로 설정
-      height: double.infinity, // 세로를 무한대로 설정
+      width: double.infinity, // 가로를 화면 크기로 설정
+      height: double.infinity, // 세로를 화면 크기로 설정
       decoration: BoxDecoration(
-        gradient: RadialGradient(
+        gradient: LinearGradient(
           colors: [
-            Colors.pink[100]!, // 중앙의 핑크색
-            Colors.blue[100]!,      // 바깥쪽으로 갈수록 화이트
+            Colors.pink[100]!, // 연한 핑크색
+            Colors.blue[100]!, // 연한 블루색
           ],
-          center: Alignment.center, // 중앙에서부터 시작
-          radius: 1.0, // 그라데이션이 퍼지는 정도 (1.0은 전체 영역)
-          stops: [0.3, 1.0], // 색상이 변화하는 위치 설정 (0.3 위치까지 핑크)
+          begin: Alignment.topLeft, // 그라데이션 시작 위치
+          end: Alignment.bottomRight, // 그라데이션 끝 위치
         ),
       ),
       child: child,
     );
   }
 }
-
-
-
-
-
-
 
 class HeaderSection extends StatelessWidget {
   @override
@@ -219,6 +210,8 @@ class HeaderSection extends StatelessWidget {
               Text(
                 "300 P",
                 style: TextStyle(
+                  fontFamily: "DoHeyon",
+                  fontSize: 24,
                   color: Colors.black,
                   fontWeight: FontWeight.bold,
                 ),
@@ -229,11 +222,11 @@ class HeaderSection extends StatelessWidget {
             children: [
               Text(
                 "D + 9",
-                style: TextStyle(color: AppColors.textBlue, fontSize: 18),
+                style: TextStyle(fontFamily: "DoHeyon", color: AppColors.textBlue, fontSize: 24),
               ),
               Text(
                 "달성률: 98%",
-                style: TextStyle(color: AppColors.textBlue),
+                style: TextStyle(fontFamily: "DoHeyon", color: AppColors.textBlue, fontSize: 24),
               ),
             ],
           ),
@@ -243,27 +236,151 @@ class HeaderSection extends StatelessWidget {
   }
 }
 
-class CountdownText extends StatelessWidget {
+class CountdownText extends StatefulWidget {
+  @override
+  _CountdownTextState createState() => _CountdownTextState();
+}
+
+class _CountdownTextState extends State<CountdownText> {
+  late int _hours;
+  late int _minutes;
+  late int _seconds;
+
+  late Timer _timer;
+
+  // 현재 시간과 자정(밤 12시)까지의 남은 시간을 계산
+  void _calculateTimeUntilMidnight() {
+    final now = DateTime.now();
+    final midnight =
+        DateTime(now.year, now.month, now.day + 1); // 자정 (다음 날 00:00)
+
+    final difference = midnight.difference(now);
+
+    setState(() {
+      _hours = difference.inHours;
+      _minutes = difference.inMinutes % 60;
+      _seconds = difference.inSeconds % 60;
+    });
+  }
+
+  // 타이머 시작
+  void _startCountdown() {
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      if (_seconds > 0) {
+        setState(() {
+          _seconds--;
+        });
+      } else if (_minutes > 0) {
+        setState(() {
+          _minutes--;
+          _seconds = 59;
+        });
+      } else if (_hours > 0) {
+        setState(() {
+          _hours--;
+          _minutes = 59;
+          _seconds = 59;
+        });
+      } else {
+        _timer.cancel(); // 타이머 종료
+      }
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _calculateTimeUntilMidnight(); // 자정까지의 시간 계산
+    _startCountdown(); // 타이머 시작
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel(); // 타이머 종료
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Text(
-      "7시간 56분 남았습니다.",
-      style: TextStyle(
-        color: AppColors.textBlue,
-        fontSize: 24,
-        fontWeight: FontWeight.bold,
-      ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween, // 좌우 정렬
+      children: [
+        // "남은 시간 : " 텍스트 (좌측 정렬)
+        Text(
+          "남은 시간 : ",
+          style: TextStyle(
+            fontFamily: "DoHeyon",
+            fontWeight: FontWeight.bold,
+            color: AppColors.textBlue,
+            fontSize: 36,
+          ),
+        ),
+        // 시간, 분, 초 부분 (우측 정렬)
+        Text(
+          "$_hours시간 $_minutes분 $_seconds초",
+          style: TextStyle(
+            fontFamily: "Diphylleia",
+            fontWeight: FontWeight.bold,
+            color: AppColors.textBlue,
+            fontSize: 36,
+          ),
+        ),
+      ],
     );
   }
 }
 
-class CharacterImage extends StatelessWidget {
+class CharacterImage extends StatefulWidget {
+  @override
+  _CharacterImageState createState() => _CharacterImageState();
+}
+
+class _CharacterImageState extends State<CharacterImage>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _rotationAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 8), // 애니메이션 지속 시간
+    );
+
+    _rotationAnimation = Tween<double>(begin: 0, end: 4 * pi).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut), // 자연스러운 회전
+    );
+
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _controller.forward(from: 0); // 애니메이션을 처음부터 다시 시작
+      }
+    });
+
+    _controller.forward(); // 애니메이션 시작
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Image.asset(
-      'assets/images/character.png',
-      // Ensure you add the character image in assets
-      height: 150,
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Transform(
+          alignment: Alignment.center,
+          transform: Matrix4.rotationY(_rotationAnimation.value), // 3D 회전
+          child: Image.asset(
+            'assets/images/character.png', // 이미지 경로
+            height: 200,
+          ),
+        );
+      },
     );
   }
 }
@@ -291,10 +408,8 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
       String userId = currentUser.uid;
 
       try {
-        DocumentSnapshot snapshot = await _firestore
-            .collection('users')
-            .doc(userId)
-            .get();
+        DocumentSnapshot snapshot =
+            await _firestore.collection('users').doc(userId).get();
 
         if (snapshot.exists && snapshot.data() != null) {
           setState(() {
@@ -317,7 +432,8 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
       String userId = currentUser.uid;
 
       DateTime currentDate = DateTime.now();
-      String formattedDate = "${currentDate.year}-${currentDate.month}-${currentDate.day}";
+      String formattedDate =
+          "${currentDate.year}-${currentDate.month}-${currentDate.day}";
 
       try {
         await _firestore.collection('users').doc(userId).set(
@@ -333,7 +449,8 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
         // 화면 전환 로직 - 챌린지 화면으로 이동
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => ChallengeScreen()), // 챌린지 화면으로 이동
+          MaterialPageRoute(
+              builder: (context) => ChallengeScreen()), // 챌린지 화면으로 이동
         );
       } catch (e) {
         print("Failed to save challenge: $e");
@@ -342,9 +459,6 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
       print("No user is currently logged in");
     }
   }
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -355,23 +469,69 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              HeaderSection(),
-              SizedBox(height: 20),
-              CountdownText(),
-              SizedBox(height: 20),
-              CharacterImage(),
-              SizedBox(height: 20),
-              ChallengePrompt(challengeText: selectedChallenge),
-              SizedBox(height: 20),
-              ChallengeButton(
-                onChallengeSelected: updateChallenge, // 콜백 전달
+              // 첫 번째 박스: HeaderSection을 감싸는 흰색 박스
+              Padding(
+                padding:
+                    const EdgeInsets.only(top: 20, bottom: 10), // 상단과 하단 여백 설정
+                child: Container(
+                  width:
+                      MediaQuery.of(context).size.width * 0.88, // 화면 너비의 80%로 설정
+                  padding: const EdgeInsets.all(10), // 내용 안에 여백
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.8), // 투명도 0.8 적용
+                    borderRadius: BorderRadius.circular(20), // 둥근 모서리
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1), // 그림자 효과
+                        blurRadius: 10,
+                        offset: Offset(0, 5), // 아래로 살짝 그림자
+                      ),
+                    ],
+                  ),
+                  child: HeaderSection(), // HeaderSection을 포함
+                ),
               ),
-              SizedBox(height: 100),
+              SizedBox(height: 20),
+
+              // 두 번째 박스: 나머지 콘텐츠를 감싸는 박스
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10), // 양옆 여백 설정
+                child: Container(
+                  width:
+                      MediaQuery.of(context).size.width * 0.88, // 화면 너비의 80%로 설정
+                  padding: const EdgeInsets.all(10), // 내용 안에 여백
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.8), // 투명도 0.8 적용
+                    borderRadius: BorderRadius.circular(20), // 둥근 모서리
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1), // 그림자 효과
+                        blurRadius: 10,
+                        offset: Offset(0, 5), // 아래로 살짝 그림자
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      CountdownText(),
+                      SizedBox(height: 40),
+                      CharacterImage(),
+                      SizedBox(height: 40),
+                      ChallengePrompt(challengeText: selectedChallenge),
+                      SizedBox(height: 10),
+                      ChallengeButton(
+                        onChallengeSelected: updateChallenge, // 콜백 전달
+                      ),
+                      SizedBox(height: 80),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: CustomBottomNavigationBar(),
+      bottomNavigationBar: CustomBottomNavigationBar(currentIndex: 0),
     );
   }
 }
@@ -387,8 +547,9 @@ class ChallengePrompt extends StatelessWidget {
       challengeText,
       style: TextStyle(
         color: AppColors.textBlue,
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
+        fontFamily: 'DoHyeon',
+        fontSize: 48,
+        // fontWeight: FontWeight.bold,
       ),
     );
   }

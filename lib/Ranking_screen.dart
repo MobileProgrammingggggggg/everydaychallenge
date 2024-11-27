@@ -67,7 +67,7 @@ class RankingScreen extends StatelessWidget {
           ),
         ],
       ),
-        bottomNavigationBar: CustomBottomNavigationBar(),
+        bottomNavigationBar: CustomBottomNavigationBar(currentIndex: 3),
     );
   }
 

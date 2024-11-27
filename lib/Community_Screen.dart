@@ -246,7 +246,7 @@ class CommunityScreen extends StatelessWidget {
                 );
               },
             ),
-            bottomNavigationBar: CustomBottomNavigationBar()),
+            bottomNavigationBar: CustomBottomNavigationBar(currentIndex: 4)),
       ),
     );
   }

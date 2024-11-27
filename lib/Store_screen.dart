@@ -216,7 +216,7 @@ class _StoreScreenState extends State<StoreScreen> {
           _buildPurchasedItems(), // 오른쪽 상단에 구매한 아이템 표시
         ],
       ),
-      bottomNavigationBar: CustomBottomNavigationBar(),
+      bottomNavigationBar: CustomBottomNavigationBar(currentIndex: 2),
     );
   }
 }
