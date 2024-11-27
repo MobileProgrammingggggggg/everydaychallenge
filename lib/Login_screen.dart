@@ -157,6 +157,7 @@ class LoginScreen extends StatelessWidget {
                         ),
                         floatingLabelBehavior: FloatingLabelBehavior.never,
                       ),
+                      onSubmitted: (_) => _login(context), // 엔터 키 누르면 로그인 실행
                     ),
                     SizedBox(height: 20),
 

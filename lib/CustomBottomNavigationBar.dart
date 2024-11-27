@@ -7,15 +7,12 @@ import 'Main_test.dart';
 import 'Calendar_screen.dart';
 // import 'Community_Screen.dart';
 import 'Community_GetX.dart';
-import 'Store_screen.dart';
 
 class CustomBottomNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed, // 간격 크기 고정
-
-
       items: [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: "홈"),
         BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: "캘린더"),

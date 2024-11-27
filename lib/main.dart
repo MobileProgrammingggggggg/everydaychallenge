@@ -27,15 +27,15 @@ void main() async {
   runApp(MyApp());
 }
 
-class MyHomePage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Main')),
-      body: Center(child: Text('Firebase Initialized in Main')),
-    );
-  }
-}
+// class MyHomePage extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(title: Text('Main')),
+//       body: Center(child: Text('Firebase Initialized in Main')),
+//     );
+//   }
+// }
 // class MyApp extends StatelessWidget {
 //   const MyApp({super.key});
 //

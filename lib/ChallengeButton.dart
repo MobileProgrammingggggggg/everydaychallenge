@@ -87,12 +87,15 @@ class _ChallengeButtonState extends State<ChallengeButton> {
                   MaterialPageRoute(builder: (context) => Roulette()),
                 ).then((value) {
                   if (value != null) {
-                    // 룰렛 결과를 업데이트
-                    widget.onChallengeSelected(value); // onChallengeSelected 콜백 호출
+                    // 선택된 값이 있는 경우 처리
+                    widget.onChallengeSelected(value); // 콜백 호출로 상위에 결과 전달
                     setState(() {
-                      flag = 2; // 상태 변경
-                      _updateFlag(flag); // Firebase에 flag 상태 업데이트
+                      flag = 2; // flag를 2로 설정
+                      _updateFlag(flag); // Firebase에 상태 업데이트
                     });
+                  } else {
+                    // 선택값이 없는 경우 (예: 다이얼로그 닫기)
+                    debugPrint("룰렛에서 값이 반환되지 않았습니다.");
                   }
                 });
               },
