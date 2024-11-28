@@ -1,3 +1,4 @@
+import 'package:desktop_window/desktop_window.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
@@ -5,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'Main_test.dart';
 
 //main 파일 이름 변경, 삭제 노노
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // dotenv 초기화
@@ -25,6 +26,10 @@ void main() async {
   }
 
   runApp(MyApp());
+
+  await DesktopWindow.setWindowSize(Size(100, 200)); // 가로 사이즈, 세로 사이즈 기본 사이즈 부여
+  await DesktopWindow.setMinWindowSize(Size(100, 200)); // 최소 사이즈 부여
+  await DesktopWindow.setMaxWindowSize(Size(10, 20)); // 최대 사이즈 부여
 }
 
 // class MyHomePage extends StatelessWidget {

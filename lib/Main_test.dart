@@ -16,7 +16,7 @@ import 'dart:async';
 // import 'Community_Screen.dart';
 
 // 메인 화면
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options:
