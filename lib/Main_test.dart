@@ -447,9 +447,13 @@ class _QuoteWidgetState extends State<QuoteWidget> {
             child: SizedBox(
               width: 40, // 원하는 가로 크기 설정
               height: 40, // 원하는 세로 크기 설정
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator(
+                strokeWidth: 10, // 로딩바의 두께 조정
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.pink[100]!), // 로딩바 색상 변경
+                backgroundColor: Colors.grey[200], // 배경 색상 설정
+              ),
             ),
-          ); // 로딩 중, 작은 크기로 표시
+          ); // 로딩 중, 작은 크기와 커스터마이징된 로딩바 표시
         }
         if (snapshot.hasError) {
           return Text('오류가 발생했습니다: ${snapshot.error}');
