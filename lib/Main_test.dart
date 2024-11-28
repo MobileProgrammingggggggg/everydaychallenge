@@ -205,28 +205,45 @@ class HeaderSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.star, color: AppColors.textBlue),
+              Container(
+                padding: const EdgeInsets.all(5), // 배경과 아이콘 사이의 간격
+                decoration: BoxDecoration(
+                  color: Colors.lightBlue, // 배경 색상
+                  shape: BoxShape.circle, // 동그란 배경
+                ),
+                child: Icon(
+                  Icons.star,
+                  color: Colors.yellowAccent,
+                  size: 16, // 아이콘 크기 설정
+                ),
+              ),
               SizedBox(width: 5),
               Text(
-                "300 P",
+                " 300 P",
                 style: TextStyle(
                   fontFamily: "DoHeyon",
-                  fontSize: 24,
+                  fontSize: 20,
                   color: Colors.black,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-          Column(
+          Row(
             children: [
               Text(
-                "D + 9",
-                style: TextStyle(fontFamily: "DoHeyon", color: AppColors.textBlue, fontSize: 24),
+                "날짜 : D + 9  ",
+                style: TextStyle(
+                    fontFamily: "DoHyeon",
+                    color: AppColors.textBlue,
+                    fontSize: 24),
               ),
               Text(
                 "달성률: 98%",
-                style: TextStyle(fontFamily: "DoHeyon", color: AppColors.textBlue, fontSize: 24),
+                style: TextStyle(
+                    fontFamily: "DoHyeon",
+                    color: AppColors.textBlue,
+                    fontSize: 24),
               ),
             ],
           ),
@@ -309,20 +326,20 @@ class _CountdownTextState extends State<CountdownText> {
         Text(
           "남은 시간 : ",
           style: TextStyle(
-            fontFamily: "DoHeyon",
-            fontWeight: FontWeight.bold,
+            fontFamily: "DoHyeon",
+            // fontWeight: FontWeight.bold,
             color: AppColors.textBlue,
-            fontSize: 36,
+            fontSize: 32,
           ),
         ),
         // 시간, 분, 초 부분 (우측 정렬)
         Text(
           "$_hours시간 $_minutes분 $_seconds초",
           style: TextStyle(
-            fontFamily: "Diphylleia",
-            fontWeight: FontWeight.bold,
+            fontFamily: "DoHyeon",
+            // fontWeight: FontWeight.bold,
             color: AppColors.textBlue,
-            fontSize: 36,
+            fontSize: 28,
           ),
         ),
       ],
@@ -378,6 +395,109 @@ class _CharacterImageState extends State<CharacterImage>
           child: Image.asset(
             'assets/images/character.png', // 이미지 경로
             height: 200,
+          ),
+        );
+      },
+    );
+  }
+}
+
+class QuoteService {
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
+
+  Future<String> getRandomQuote() async {
+    try {
+      // Firestore에서 'quotes' 컬렉션을 가져와서 랜덤으로 명언을 선택
+      var snapshot = await _db.collection('quotes').get();
+      var docs = snapshot.docs;
+      if (docs.isNotEmpty) {
+        var randomIndex =
+            Random().nextInt(docs.length); // 0부터 docs.length-1 사이의 랜덤 인덱스 선택
+        return docs[randomIndex]['quote']; // 랜덤 인덱스에 해당하는 명언 반환
+      }
+      return '명언을 불러올 수 없습니다.'; // 데이터가 없으면 기본 문구 반환
+    } catch (e) {
+      return '명언을 불러오는 중 오류가 발생했습니다.';
+    }
+  }
+}
+
+class QuoteWidget extends StatefulWidget {
+  @override
+  _QuoteWidgetState createState() => _QuoteWidgetState();
+}
+
+class _QuoteWidgetState extends State<QuoteWidget> {
+  final QuoteService _quoteService = QuoteService();
+  late Future<String> _quoteFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _quoteFuture = _quoteService.getRandomQuote(); // 명언 가져오기
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String>(
+      future: _quoteFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: SizedBox(
+              width: 40, // 원하는 가로 크기 설정
+              height: 40, // 원하는 세로 크기 설정
+              child: CircularProgressIndicator(),
+            ),
+          ); // 로딩 중, 작은 크기로 표시
+        }
+        if (snapshot.hasError) {
+          return Text('오류가 발생했습니다: ${snapshot.error}');
+        }
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return Text('명언을 불러올 수 없습니다.');
+        }
+        return Padding(
+          padding: const EdgeInsets.all(5),
+          child: Column(
+            children: [
+              // 명언 내용 (좌측 정렬)
+              Text(
+                () {
+                  String quote = snapshot.data!;
+                  List<String> quoteParts =
+                      quote.split('-'); // 하이픈 기준으로 명언과 저자 구분
+                  return quoteParts[0]; // 명언 내용
+                }(),
+                style: TextStyle(
+                  fontFamily: "Diphylleia",
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.black54,
+                ),
+                textAlign: TextAlign.left, // 명언은 좌측 정렬
+              ),
+
+              // 저자 (우측 정렬)
+              Text(
+                () {
+                  String quote = snapshot.data!;
+                  List<String> quoteParts = quote.split('-');
+                  return quoteParts.length > 1
+                      ? '-${quoteParts[1]}'
+                      : ''; // 저자 부분
+                }(),
+                style: TextStyle(
+                  fontFamily: "Diphylleia",
+                  fontSize: 14,
+                  fontWeight: FontWeight.normal,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.black54,
+                ),
+                textAlign: TextAlign.right, // 저자는 우측 정렬
+              ),
+            ],
           ),
         );
       },
@@ -472,14 +592,17 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
               // 첫 번째 박스: HeaderSection을 감싸는 흰색 박스
               Padding(
                 padding:
-                    const EdgeInsets.only(top: 20, bottom: 10), // 상단과 하단 여백 설정
+                    const EdgeInsets.only(top: 20, bottom: 5), // 상단과 하단 여백 설정
                 child: Container(
-                  width:
-                      MediaQuery.of(context).size.width * 0.88, // 화면 너비의 80%로 설정
+                  width: MediaQuery.of(context).size.width *
+                      0.88, // 화면 너비의 80%로 설정
                   padding: const EdgeInsets.all(10), // 내용 안에 여백
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.8), // 투명도 0.8 적용
-                    borderRadius: BorderRadius.circular(20), // 둥근 모서리
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(20),  // 위쪽만 둥글게
+                      bottom: Radius.circular(10),
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.1), // 그림자 효과
@@ -491,18 +614,47 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
                   child: HeaderSection(), // HeaderSection을 포함
                 ),
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 5),
 
-              // 두 번째 박스: 나머지 콘텐츠를 감싸는 박스
+              // 두 번쨰 박스 : 명언
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10), // 양옆 여백 설정
+                padding: const EdgeInsets.only(bottom: 5), // 상단과 하단 여백 설정
                 child: Container(
-                  width:
-                      MediaQuery.of(context).size.width * 0.88, // 화면 너비의 80%로 설정
+                  width: MediaQuery.of(context).size.width *
+                      0.88, // 화면 너비의 80%로 설정
                   padding: const EdgeInsets.all(10), // 내용 안에 여백
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.8), // 투명도 0.8 적용
-                    borderRadius: BorderRadius.circular(20), // 둥근 모서리
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(10),  // 위쪽만 둥글게
+                      bottom: Radius.circular(10),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1), // 그림자 효과
+                        blurRadius: 10,
+                        offset: Offset(0, 5), // 아래로 살짝 그림자
+                      ),
+                    ],
+                  ),
+                  child: QuoteWidget(), // HeaderSection을 포함
+                ),
+              ),
+              SizedBox(height: 5),
+
+              // 세 번째 박스: 나머지 콘텐츠를 감싸는 박스
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10), // 양옆 여백 설정
+                child: Container(
+                  width: MediaQuery.of(context).size.width *
+                      0.88, // 화면 너비의 80%로 설정
+                  padding: const EdgeInsets.all(10), // 내용 안에 여백
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.8), // 투명도 0.8 적용
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(10),  // 위쪽만 둥글게
+                      bottom: Radius.circular(20),
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.1), // 그림자 효과
@@ -514,15 +666,15 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
                   child: Column(
                     children: [
                       CountdownText(),
-                      SizedBox(height: 40),
+                      SizedBox(height: 20),
                       CharacterImage(),
-                      SizedBox(height: 40),
+                      SizedBox(height: 20),
                       ChallengePrompt(challengeText: selectedChallenge),
                       SizedBox(height: 10),
                       ChallengeButton(
                         onChallengeSelected: updateChallenge, // 콜백 전달
                       ),
-                      SizedBox(height: 80),
+                      SizedBox(height: 40),
                     ],
                   ),
                 ),

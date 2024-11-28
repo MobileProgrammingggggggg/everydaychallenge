@@ -133,8 +133,9 @@ class _StoreScreenState extends State<StoreScreen> {
           Column(
             children: [
               Padding(
-                padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 40.0),
+                padding: EdgeInsets.symmetric( horizontal: 32, vertical: 16),
                 child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8), // 여백 추가
                   decoration: BoxDecoration(
                     color: Colors.pink[200],
                     borderRadius: BorderRadius.circular(20),

@@ -117,7 +117,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ),
           ElevatedButton(
             onPressed: () => _markSuccess(_selectedDay), // 선택한 날짜를 성공한 날로 마크
-            child: Text('성공!'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.pink, // 버튼의 배경색을 핑크로 설정
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30), // 버튼을 둥글게 만듦
+              ),
+            ),
+            child: Text(
+              '성공!',
+              style: TextStyle(
+                color: Colors.white, // 텍스트 색상을 흰색으로 설정
+              ),
+            ),
           ),
           Expanded(
             child:_completedDays.isEmpty
