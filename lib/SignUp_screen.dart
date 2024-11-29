@@ -49,6 +49,7 @@ class SignUpScreen extends StatelessWidget {
         'id': id,
         'email': email,
         'createdAt': DateTime.now(),
+        'password': password,
       });
 
       print('회원가입 성공: ${credential.user?.email}');
