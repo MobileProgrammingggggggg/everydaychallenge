@@ -1,5 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 //import 'package:particle_field/particle_field.dart';
 // 추후 particle 폭죽 이벤트 추가 예정
@@ -21,19 +23,18 @@ class _RouletteState extends State<Roulette>
   late AnimationController _controller;
   double _rotation = 0.0;
 
-  final List<String> items = [
-    "물 2잔 마시기",
-    "10키로 걷기",
-    "2키로 뛰기",
-    "숨 쉬기",
-    "영단어 1개 암기"
-  ];
+  List<String> items = []; // Firebase에서 가져온 항목들
+  bool _isLoading = true; // 데이터 로딩 상태 표시
+  List<String> savedDocuments = []; // 저장된 문서 번호들
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
   final List<Color> colors = [
-    Colors.red,
-    Colors.green,
-    Colors.blue,
-    Colors.yellow,
-    Colors.orange
+    Color(0xFFFFA7C1), // 약간 더 강한 밝은 핑크 (밝기 올림)
+    Color(0xFFF89D7C), // 부드러운 핑크, 오렌지 빛이 섞인 느낌
+    Color(0xFFFFB5B5), // 연한 핑크, 더욱 밝고 부드러운 느낌
+    Color(0xFFFF9A8D), // 살구 핑크, 톤 다운된 느낌
+    Color(0xFFFFD8D8), // 베이지 핑크, 매우 밝고 부드러운 느낌
   ];
 
   @override
@@ -43,6 +44,199 @@ class _RouletteState extends State<Roulette>
       duration: const Duration(seconds: 3),
       vsync: this,
     );
+    _fetchChallengeItems(); // 데이터 로드 함수 호출
+  }
+
+  bool isUpdating = false;
+  FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  // 1. 현재 로그인한 유저의 UID를 가져오기
+  Future<String?> _getCurrentUserUid() async {
+    final user = FirebaseAuth.instance.currentUser;
+    return user?.uid; // 로그인한 사용자 UID 반환
+  }
+
+  // 2. 랜덤으로 5개의 문서 번호를 뽑아 users 컬렉션에 저장
+  Future<void> _saveRandomChallengeDocuments(String userUid,
+      [bool isRefresh = false]) async {
+    final random = Random();
+    final randomDocuments = <String>[];
+
+    try {
+      // Firestore에서 challengelist 컬렉션의 문서 이름들 가져오기
+      final challengelistSnapshot =
+          await _firestore.collection('challengelist').get();
+
+      if (challengelistSnapshot.docs.isEmpty) {
+        print("challengelist 컬렉션에 문서가 없습니다.");
+        return;
+      }
+
+      // 문서들의 ID를 리스트로 저장
+      final documentNames =
+          challengelistSnapshot.docs.map((doc) => doc.id).toList();
+
+      // 5개의 랜덤 문서 번호 선택
+      while (randomDocuments.length < 5) {
+        final randomDocument =
+            documentNames[random.nextInt(documentNames.length)];
+        if (!randomDocuments.contains(randomDocument)) {
+          randomDocuments.add(randomDocument);
+        }
+      }
+
+      // Firestore에서 users 컬렉션에 해당하는 문서 참조
+      DocumentReference userDoc = _firestore.collection('users').doc(userUid);
+
+      // 문서 가져오기
+      final userSnapshot = await userDoc.get();
+
+      if (userSnapshot.exists) {
+        // 기존에 선택된 챌린지 목록이 있고, 새로고침이 아니면 업데이트하지 않음
+        if (!isRefresh) {
+          final existingChallenges = userSnapshot['selected_challenges'];
+          if (existingChallenges != null && existingChallenges.isNotEmpty) {
+            // 값이 있으면 업데이트 하지 않음
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("선택된 챌린지 목록 문서가 이미 존재합니다."),
+                backgroundColor: Colors.pink[100]!, // 핑크색 배경
+              ),
+            );
+            return;
+          }
+        }
+      }
+
+      // selected_challenges 필드에 랜덤 문서 번호 추가
+      await userDoc.update({
+        'selected_challenges': randomDocuments, // 선택된 5개 문서 번호 저장
+      });
+
+      setState(() {
+        isUpdating = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('랜덤으로 5개의 문서 번호가 저장되었습니다!'),
+          backgroundColor: Colors.pink[100]!, // 핑크색 배경
+        ),
+      );
+
+      print("선택된 문서들: $randomDocuments");
+    } catch (e) {
+      setState(() {
+        isUpdating = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('에러가 발생했습니다: $e'),
+          backgroundColor: Colors.pink, // 핑크색 배경
+        ),
+      );
+    }
+  }
+
+  // 3. users 컬렉션에서 선택된 문서 번호들 가져오기
+  Future<void> _fetchSavedChallengeDocuments(String userUid) async {
+    try {
+      final userDoc = await _firestore.collection('users').doc(userUid).get();
+
+      if (userDoc.exists) {
+        final documentNames =
+            List<String>.from(userDoc['selected_challenges'] ?? []);
+        if (documentNames.isNotEmpty) {
+          _fetchItemsFromSelectedDocuments(documentNames);
+        } else {
+          print("선택된 문서가 없습니다.");
+        }
+      } else {
+        print("사용자 문서가 존재하지 않습니다.");
+      }
+    } catch (e) {
+      print("데이터 가져오기 실패: $e");
+    }
+  }
+
+  // 4. 선택된 5개 문서에서 데이터를 가져오기
+  Future<void> _fetchItemsFromSelectedDocuments(
+      List<String> documentNames) async {
+    final List<String> allItems = [];
+
+    try {
+      for (var documentName in documentNames) {
+        final snapshot = await _firestore
+            .collection('challengelist')
+            .doc(documentName) // list1, list2, list3 등
+            .get();
+
+        if (snapshot.exists) {
+          // 문서에서 직접 항목을 가져오기
+          if (snapshot.data() != null) {
+            // 문서 내 필드에서 필요한 데이터 가져오기 (예: 'item' 필드)
+            var item = snapshot['list']; // 'list' 필드가 있으면
+            if (item != null) {
+              allItems.add(item); // 항목을 allItems 리스트에 추가
+            } else {
+              print("항목이 없습니다: $documentName");
+            }
+          } else {
+            print("문서에 데이터가 없습니다: $documentName");
+          }
+        } else {
+          print("문서가 존재하지 않습니다: $documentName");
+        }
+      }
+
+      setState(() {
+        items = allItems; // 모든 항목을 하나의 리스트로 합침
+        _isLoading = false;
+      });
+    } catch (e) {
+      print("데이터 가져오기 실패: $e");
+    }
+  }
+
+  // 5. 처음 화면이 로드될 때 랜덤 5개 문서 번호를 뽑아서 저장하고 데이터를 가져옴
+  Future<void> _fetchChallengeItems() async {
+    if (isUpdating) return; // 이미 업데이트 중이면 리턴
+
+    final userUid = await _getCurrentUserUid(); // 현재 로그인된 유저의 UID 가져오기
+    if (userUid != null) {
+      setState(() {
+        isUpdating = true; // 업데이트 시작
+      });
+      await _saveRandomChallengeDocuments(userUid); // 랜덤 5개 문서 번호 저장
+      await _fetchSavedChallengeDocuments(userUid); // 저장된 문서 번호들을 기반으로 데이터 가져오기
+      setState(() {
+        isUpdating = false; // 업데이트 끝
+      });
+    } else {
+      // 유저가 로그인하지 않은 경우 처리
+      print("로그인된 유저가 없습니다.");
+    }
+  }
+
+  // 새로 고침 버튼 클릭 시 호출될 함수
+  Future<void> refreshList() async {
+    setState(() {
+      _isLoading = true; // 로딩 상태로 변경
+    });
+
+    final userUid = await _getCurrentUserUid(); // 현재 로그인된 유저의 UID 가져오기
+    if (userUid != null) {
+      // 1. 기존에 저장된 데이터는 무시하고 랜덤으로 새로운 5개 문서 번호를 저장
+      await _saveRandomChallengeDocuments(userUid, true);
+
+      // 2. 새로 고침을 위해 새로운 데이터를 가져오기
+      await _fetchChallengeItems(); // 데이터를 새로 가져오는 함수 호출
+    }
+
+    setState(() {
+      _isLoading = false; // 로딩 끝
+    });
   }
 
   bool _isSpinning = false; // 룰렛 회전 중인지 여부
@@ -199,35 +393,43 @@ class _RouletteState extends State<Roulette>
       appBar: AppBar(title: Text("챌린지 룰렛 돌리기")),
       body: GradientBackground(
         child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Stack(
-                alignment: Alignment.topCenter,
-                children: [
-                  Transform.rotate(
-                    angle: _rotation,
-                    child: CustomPaint(
-                      size: Size(300, 300),
-                      painter: RoulettePainter(items, colors),
+          child: _isLoading
+              ? CircularProgressIndicator() // 로딩 중 표시
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Stack(
+                      alignment: Alignment.topCenter,
+                      children: [
+                        Transform.rotate(
+                          angle: _rotation,
+                          // 룰렛 크기 조정
+                          child: CustomPaint(
+                            size: Size(400, 400),
+                            painter: RoulettePainter(items, colors),
+                          ),
+                        ),
+                        Positioned(
+                          top: 0,
+                          child: CustomPaint(
+                            size: Size(30, 20),
+                            painter: TrianglePainter(),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  Positioned(
-                    top: 0,
-                    child: CustomPaint(
-                      size: Size(30, 20),
-                      painter: TrianglePainter(),
+                    SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: _isSpinning ? null : startSpin,
+                      child: Text("Spin"),
                     ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _isSpinning ? null : startSpin,
-                child: Text("Spin"),
-              ),
-            ],
-          ),
+                    // 새로 고침 버튼 추가
+                    ElevatedButton(
+                      onPressed: _isLoading ? null : refreshList,
+                      child: Text("새로 고침"),
+                    ),
+                  ],
+                ),
         ),
       ),
     );
@@ -253,10 +455,24 @@ class RoulettePainter extends CustomPainter {
     final radius = min(size.width / 2, size.height / 2);
 
     for (int i = 0; i < items.length; i++) {
-      paint.color = colors[i];
-      final startAngle = (i * 72) * (pi / 180);
-      final sweepAngle = (72 * pi / 180);
+      // 항목마다 개별적으로 그라데이션을 적용하기 위해 색상 배열을 사용
+      final gradient = LinearGradient(
+        colors: [
+          colors[i],
+          colors[(i + 1) % colors.length]
+        ], // 다음 색상으로 그라데이션을 만들기
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
 
+      // 각 항목에 대해 그라데이션 적용
+      paint.shader = gradient
+          .createShader(Rect.fromCircle(center: center, radius: radius));
+
+      final startAngle = (i * 72) * (pi / 180); // 72도씩 간격으로
+      final sweepAngle = (72 * pi / 180); // 72도
+
+      // 그라데이션이 적용된 원 그리기
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: radius),
         startAngle,
@@ -265,14 +481,17 @@ class RoulettePainter extends CustomPainter {
         paint,
       );
 
+      // 텍스트 그리기
       final textPainter = TextPainter(
         text: TextSpan(
           text: items[i],
-          style: TextStyle(color: Colors.white, fontSize: 12),
+          style: TextStyle(color: Colors.white, fontSize: 16),
         ),
         textDirection: TextDirection.ltr,
       );
       textPainter.layout();
+
+      // 텍스트 위치 계산
       final x = center.dx +
           (radius / 2) * cos(startAngle + sweepAngle / 2) -
           textPainter.width / 2;
@@ -292,7 +511,7 @@ class RoulettePainter extends CustomPainter {
 class TrianglePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.pink;
+    final paint = Paint()..color = Colors.blue[100]!;
 
     final path = Path()
       ..moveTo(size.width / 2, 48)

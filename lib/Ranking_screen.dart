@@ -1,14 +1,68 @@
-import 'dart:math';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:test_flutter/themes/colors.dart';
 import 'CustomBottomNavigationBar.dart';
 
-class RankingScreen extends StatelessWidget {
-  get random => null;
+class RankingScreen extends StatefulWidget {
+  @override
+  _RankingScreenState createState() => _RankingScreenState();
+}
 
-  get title => null;
+class _RankingScreenState extends State<RankingScreen> {
+  List<QueryDocumentSnapshot> users = [];
+  bool isLoading = true; // 로딩 상태
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUsers(); // 데이터를 처음에 가져옵니다.
+  }
+
+  // 데이터를 가져오고 업데이트하는 함수
+  // 이유 모르겠고 소스 복붙하다가 갑자기 됨 개꿀
+  Future<void> _fetchUsers() async {
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance.collection('users').get();
+      final usersList = snapshot.docs;
+
+      if (usersList.isEmpty) {
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
+
+      // // score 필드가 없는 유저들에 대해 score 0 값 추가
+      // List<Future> updateFutures = [];
+      // for (var user in usersList) {
+      //   if (user.get('score') == null) {
+      //     updateFutures.add(
+      //       FirebaseFirestore.instance.collection('users').doc(user.id).set(
+      //         {
+      //           'score': 0, // score 필드가 없으면 0로 설정
+      //         },
+      //         SetOptions(merge: true), // 기존 데이터를 덮어쓰지 않고 병합
+      //       ),
+      //     );
+      //   }
+      // }
+      //
+      // // 모든 update 작업이 완료되기를 기다린 후 UI 갱신
+      // await Future.wait(updateFutures);
+
+      setState(() {
+        users = usersList; // 유저 리스트 갱신
+        isLoading = false; // 로딩 상태 종료
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      print("데이터 가져오기 실패: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,109 +80,144 @@ class RankingScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          // 탭 버튼
-        Container(
-          padding: EdgeInsets.symmetric(vertical: 15),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center
-        ),
-      ),
-
-
-    // 상위 3명의 랭킹
-          Container(
-            padding: EdgeInsets.symmetric(vertical: 20),
-
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildTopRankItem(421, '2등', 'user1', AppColors.aquaBlue),
-                _buildTopRankItem(409, '1등', 'user2', AppColors.melonOrange, isCrowned: true),
-                _buildTopRankItem(362, '3등', 'user3', AppColors.aquaBlue),
-              ],
-            ),
-          ),
-          Divider(
-          color: Colors.grey.shade300,       // 선의 색상
-          thickness: 2,             // 선의 두께
-          indent: 16,               // 시작 지점 여백 (왼쪽 여백)
-          endIndent: 16,            // 끝 지점 여백 (오른쪽 여백)
-          ),
-          //  나머지 랭킹 리스트
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.all(16.0),
-              children: List.generate(10, (index) {
-                return _buildRankRow(index + 4, 'user',  0);
-              }),
-            ),
-          ),
-        ],
-      ),
-        bottomNavigationBar: CustomBottomNavigationBar(currentIndex: 3),
+      body: isLoading
+          ? Center(child: CircularProgressIndicator()) // 데이터 로딩 중
+          : _buildRankingList(), // 데이터 로딩 완료 후 화면 구성
+      bottomNavigationBar: CustomBottomNavigationBar(currentIndex: 3),
     );
   }
 
+  Widget _buildRankingList() {
+    final sortedUsers = List.from(users)
+      ..sort((a, b) {
+        final scoreA = a.get('score') != null
+            ? int.tryParse(a.get('score').toString()) ?? 0
+            : 0;
 
+        final scoreB = b.get('score') != null
+            ? int.tryParse(b.get('score').toString()) ?? 0
+            : 0;
 
-  /*Widget _buildTabButton(BuildContext context, String text, bool isSelected, {double width = 100}) {
-    return GestureDetector(
-      onTap: () {},
-      child: Container(
-        width: width,
-        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.pink[200] : Colors.blue[200],
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Center(
-        child: Text(
-          text,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-      )
-    );
-  }*/
+        return scoreB.compareTo(scoreA); // 내림차순 정렬
+      });
 
-  Widget _buildTopRankItem(int rank, String name, String score, Color color, {bool isCrowned = false}) {
     return Column(
       children: [
-        if (isCrowned) Icon(FontAwesomeIcons.crown, color: Colors.amber, size: 24), // 왕관 아이콘
-        CircleAvatar(
-          radius: 30,
-          backgroundColor: color,
-          child: Text(
-            name,
-            style: TextStyle(color: Colors.white),
+        Container(
+          padding: EdgeInsets.symmetric(vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildTopRankItem(
+                  sortedUsers.length > 1
+                      ? sortedUsers[1].get('score')?.toString() ?? "도전 중"
+                      : "도전 중",
+                  '2등',
+                  sortedUsers.length > 1
+                      ? sortedUsers[1].get('id') ?? 'Unknown'
+                      : 'user',
+                  Color(0xFFC0C0C0)),
+              _buildTopRankItem(
+                  sortedUsers.isNotEmpty
+                      ? sortedUsers[0].get('score')?.toString() ?? "도전 중"
+                      : "도전 중",
+                  '1등',
+                  sortedUsers.isNotEmpty
+                      ? sortedUsers[0].get('id') ?? 'Unknown'
+                      : 'user',
+                  Color(0xFFFFD700),
+                  isCrowned: true),
+              _buildTopRankItem(
+                  sortedUsers.length > 2
+                      ? sortedUsers[2].get('score')?.toString() ?? "도전 중"
+                      : "도전 중",
+                  '3등',
+                  sortedUsers.length > 2
+                      ? sortedUsers[2].get('id') ?? 'Unknown'
+                      : 'user',
+                  Color(0xFFCD7F32)),
+            ],
           ),
         ),
-        SizedBox(height: 8),
-        Text(score, style: TextStyle(color: Colors.black)),
-        SizedBox(height: 8),
-        Text('$rank', style: TextStyle(color: Colors.black, fontSize: 18)),
+        Divider(
+          color: Colors.grey.shade300,
+          thickness: 2,
+          indent: 16,
+          endIndent: 16,
+        ),
+        Expanded(
+          child: ListView.builder(
+            padding: EdgeInsets.all(16.0),
+            itemCount: sortedUsers.length - 3 > 0 ? sortedUsers.length - 3 : 0,
+            itemBuilder: (context, index) {
+              final user = sortedUsers[index + 3];
+              return _buildRankRow(
+                user.get('score') != null
+                    ? user.get('score')?.toString() ?? "도전 중"
+                    : "도전 중",
+                '${index + 4}',
+                user.get('id') ?? 'Unknown',
+              );
+            },
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildRankRow(int rank, String name, int score) {
+  Widget _buildTopRankItem(String score, String rank, String name, Color color,
+      {bool isCrowned = false}) {
+    return Column(
+      children: [
+        if (isCrowned)
+          Icon(FontAwesomeIcons.crown, color: Colors.amber, size: 30),
+        Container(
+          width: 80, // 원의 너비
+          height: 80, // 원의 높이
+          decoration: BoxDecoration(
+            shape: BoxShape.circle, // 원 모양
+            color: color, // 원의 색상
+            border: Border.all(
+              color: Colors.pinkAccent[200]!, // 테두리 색상
+              width: 2, // 테두리 두께
+            ),
+          ),
+          child: Center(
+            child: Text(
+              name.length > 4 ? '${name.substring(0, 4)}..' : name,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: isCrowned ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ),
+        ),
+        SizedBox(height: 4),
+        Text(name, style: TextStyle(color: Colors.black)),
+        SizedBox(height: 4),
+        Text(
+          score, // 점수 또는 "도전 중" 표시
+          style: TextStyle(
+            color: isCrowned ? Colors.amber : Colors.black,
+            fontSize: 18,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRankRow(String score, String rank, String name) {
     return ListTile(
       leading: CircleAvatar(
         backgroundColor: Colors.grey.shade300,
-        child: Text(name[0]),  // 첫 글자만 표시
+        child: Text(name[0].toUpperCase()),
       ),
-      title: Text(name), // 이름 전체 표시
+      title: Text(name),
       trailing: Text(
-        '$score', // 점수 표시
+        score,
         style: TextStyle(color: Colors.black),
       ),
     );
   }
-
 }

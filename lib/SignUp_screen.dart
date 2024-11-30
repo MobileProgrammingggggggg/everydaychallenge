@@ -40,7 +40,7 @@ class SignUpScreen extends StatelessWidget {
     try {
       // Firebase Authentication으로 회원가입
       final credential =
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
@@ -55,6 +55,8 @@ class SignUpScreen extends StatelessWidget {
         'createdAt': DateTime.now(),
         'password': password,
         'points': 1000, // 테스트용 포인트 1000 지급
+        'score' : 0,
+        'selected_challenges': [], // 룰렛 항목 저장할 배열
         '기록 삭제권': 0, // 아이템은 기본개수는 0으로 할것이지만
         '난이도 선택권': 0, // 초기화면에서 잘 불러와지는지 확인하기위해 임의의 개수 집어넣었고
         '룰렛 재추첨권': 0, // 아이템을 구매하면 실시간으로 업데이트되어 인벤토리에서 확인 가능함
@@ -119,7 +121,7 @@ class SignUpScreen extends StatelessWidget {
                       decoration: InputDecoration(
                         labelText: 'Email을 입력해주세요...',
                         labelStyle:
-                            TextStyle(color: Colors.black54, fontSize: 12),
+                        TextStyle(color: Colors.black54, fontSize: 12),
                         border: OutlineInputBorder(),
                         enabledBorder: OutlineInputBorder(
                           borderSide: BorderSide(color: Colors.black),
@@ -141,7 +143,7 @@ class SignUpScreen extends StatelessWidget {
                       decoration: InputDecoration(
                         labelText: 'ID를 입력해주세요...',
                         labelStyle:
-                            TextStyle(color: Colors.black54, fontSize: 12),
+                        TextStyle(color: Colors.black54, fontSize: 12),
                         border: OutlineInputBorder(),
                         enabledBorder: OutlineInputBorder(
                           borderSide: BorderSide(color: Colors.black),
@@ -164,7 +166,7 @@ class SignUpScreen extends StatelessWidget {
                       decoration: InputDecoration(
                         labelText: 'Password를 입력해주세요...',
                         labelStyle:
-                            TextStyle(color: Colors.black54, fontSize: 12),
+                        TextStyle(color: Colors.black54, fontSize: 12),
                         border: OutlineInputBorder(),
                         enabledBorder: OutlineInputBorder(
                           borderSide: BorderSide(color: Colors.black),
