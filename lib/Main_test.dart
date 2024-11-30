@@ -20,7 +20,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options:
-        DefaultFirebaseOptions.currentPlatform, // 웹에서 FirebaseOptions을 가져옵니다.
+    DefaultFirebaseOptions.currentPlatform, // 웹에서 FirebaseOptions을 가져옵니다.
   );
   runApp(MyApp());
 }
@@ -195,7 +195,30 @@ class GradientBackground extends StatelessWidget {
   }
 }
 
-class HeaderSection extends StatelessWidget {
+class HeaderSection extends StatefulWidget {
+  @override
+  _HeaderSectionState createState() => _HeaderSectionState();
+}
+
+class _HeaderSectionState extends State<HeaderSection> {
+  String uid = FirebaseAuth.instance.currentUser!.uid;
+  int points = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    getUserInfo();
+  }
+
+  getUserInfo() async {
+    var result = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    if (result.exists) {
+      setState(() {
+        points = result.data()?['points'] ?? 0; // 'points' 필드에서 포인트 값을 가져옴
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -219,9 +242,9 @@ class HeaderSection extends StatelessWidget {
               ),
               SizedBox(width: 5),
               Text(
-                " 300 P",
+                " $points P", // 데이터베이스에서 가져온 포인트 출력
                 style: TextStyle(
-                  fontFamily: "DoHeyon",
+                  fontFamily: "DoHyeon",
                   fontSize: 20,
                   color: Colors.black,
                   fontWeight: FontWeight.bold,
@@ -253,6 +276,8 @@ class HeaderSection extends StatelessWidget {
   }
 }
 
+
+
 class CountdownText extends StatefulWidget {
   @override
   _CountdownTextState createState() => _CountdownTextState();
@@ -269,7 +294,7 @@ class _CountdownTextState extends State<CountdownText> {
   void _calculateTimeUntilMidnight() {
     final now = DateTime.now();
     final midnight =
-        DateTime(now.year, now.month, now.day + 1); // 자정 (다음 날 00:00)
+    DateTime(now.year, now.month, now.day + 1); // 자정 (다음 날 00:00)
 
     final difference = midnight.difference(now);
 
@@ -412,7 +437,7 @@ class QuoteService {
       var docs = snapshot.docs;
       if (docs.isNotEmpty) {
         var randomIndex =
-            Random().nextInt(docs.length); // 0부터 docs.length-1 사이의 랜덤 인덱스 선택
+        Random().nextInt(docs.length); // 0부터 docs.length-1 사이의 랜덤 인덱스 선택
         return docs[randomIndex]['quote']; // 랜덤 인덱스에 해당하는 명언 반환
       }
       return '명언을 불러올 수 없습니다.'; // 데이터가 없으면 기본 문구 반환
@@ -538,7 +563,7 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
 
       try {
         DocumentSnapshot snapshot =
-            await _firestore.collection('users').doc(userId).get();
+        await _firestore.collection('users').doc(userId).get();
 
         if (snapshot.exists && snapshot.data() != null) {
           setState(() {
@@ -601,7 +626,7 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
               // 첫 번째 박스: HeaderSection을 감싸는 흰색 박스
               Padding(
                 padding:
-                    const EdgeInsets.only(top: 20, bottom: 5), // 상단과 하단 여백 설정
+                const EdgeInsets.only(top: 20, bottom: 5), // 상단과 하단 여백 설정
 
                 child: Container(
                   width: MediaQuery.of(context).size.width *
