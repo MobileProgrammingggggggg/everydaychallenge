@@ -1,9 +1,17 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:test_flutter/themes/colors.dart';
 import 'CustomBottomNavigationBar.dart';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'ChallengeButton.dart';
 
 class CalendarScreen extends StatefulWidget {
+  static final GlobalKey<_CalendarScreenState> globalKey =
+  GlobalKey<_CalendarScreenState>();
+
+  CalendarScreen({Key? key}) : super(key: globalKey);
+
   @override
   _CalendarScreenState createState() => _CalendarScreenState();
 }
@@ -13,22 +21,95 @@ class _CalendarScreenState extends State<CalendarScreen> {
   late DateTime _selectedDay;
   late DateTime _focusedDay;
 
-  // 성공한 날짜 목록
-  Set<DateTime> _completedDays = {};
+  // Firestore 데이터를 저장할 변수
+  Set<DateTime> _completedDays = {}; // 성공한 날짜 목록
+  Map<DateTime, String> _completedChallenges = {}; // 날짜와 챌린지 이름 매핑
+
+  String uid = FirebaseAuth.instance.currentUser!.uid;
+
+  // 성공한 날짜 및 챌린지 이름을 업데이트하는 메서드
+  void _updateCompletedChallenge(DateTime day, String challengeName) {
+    setState(() {
+      _completedDays.add(day);
+      _completedChallenges[day] = challengeName;
+    });
+
+    // Firestore에 업데이트
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .collection('completedChallenges')
+        .doc('${day.year}-${day.month}-${day.day}')
+        .set({'challengeName': challengeName});
+  }
 
   @override
   void initState() {
     super.initState();
     _selectedDay = DateTime.now();
     _focusedDay = DateTime.now();
+
+    _fetchCompletedChallenges(); // Firestore 데이터 초기화
+    _listenToChallengeUpdates(); // 실시간 구독
   }
 
   // 성공한 날을 추가하는 함수
-  void _markSuccess(DateTime day) {
+  void _markSuccess(DateTime day, String challengeName) {
+    String formattedDate = '${day.year}-${day.month}-${day.day}';
+
     setState(() {
-      // 이미 성공한 날이 아니면 추가
-      if (!_completedDays.contains(day)) {
+      // 성공한 날짜와 챌린지 이름을 저장
+      _completedDays.add(day);
+      _completedChallenges[day] = challengeName;
+    });
+
+    // Firestore에 저장
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('completedChallenges')
+        .doc(formattedDate)
+        .set({'challengeName': challengeName});
+  }
+
+  void _fetchCompletedChallenges() async {
+    // Firestore에서 데이터 읽기
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('completedChallenges')
+        .get();
+
+    setState(() {
+      for (var doc in snapshot.docs) {
+        DateTime day = DateTime.parse(doc.id); // 문서 ID를 날짜로 변환
+        String challengeName = doc['challengeName'];
+
         _completedDays.add(day);
+        _completedChallenges[day] = challengeName;
+      }
+    });
+  }
+
+  void _listenToChallengeUpdates() {
+    // Firestore의 `users` 컬렉션에서 데이터 읽기
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid) // 유저 ID를 적절히 바꾸세요
+        .snapshots()
+        .listen((snapshot) {
+      if (snapshot.exists) {
+        Map<String, dynamic> data = snapshot.data()!;
+        if (data['challengeFlag'] == 3) {
+          // 성공한 날짜를 추가
+          DateTime today = DateTime.now();
+          String challengeName = data['selectedChallenge'] ?? 'Unknown Challenge';
+
+          setState(() {
+            _completedDays.add(today);
+            _completedChallenges[today] = challengeName;
+          });
+        }
       }
     });
   }
@@ -37,25 +118,27 @@ class _CalendarScreenState extends State<CalendarScreen> {
   bool _isSuccess(DateTime day) {
     // 성공한 날인지 확인 (시간까지 정확하게 비교하지 않도록 DateTime의 연, 월, 일을 비교)
     return _completedDays.any((completedDay) =>
-    completedDay.year == day.year &&
+        completedDay.year == day.year &&
         completedDay.month == day.month &&
         completedDay.day == day.day);
   }
+
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.pink[100],
-        title: Text('캘린더',
+        title: Text(
+          '캘린더',
           style: TextStyle(
             color: Colors.black,
             fontSize: 24,
             fontWeight: FontWeight.bold,
-          ),),
-
+          ),
+        ),
       ),
-
       body: Column(
         children: [
           TableCalendar(
@@ -70,29 +153,27 @@ class _CalendarScreenState extends State<CalendarScreen> {
               });
             },
             calendarBuilders: CalendarBuilders(
-              // 날짜를 중복해서 표시하지 않음
               markerBuilder: (context, day, focusedDay) {
-                bool isSuccess = _isSuccess(day);
-                return isSuccess
-                    ? Positioned(
-                  top: 6, // 동그라미를 조금 위로 올리기 위해 `top` 값을 조정
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.brightPink.withOpacity(0.5),
+                if (_isSuccess(day)) {
+                  return Positioned(
+                    top: 6,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.brightPink.withOpacity(0.5),
+                      ),
+                      width: 40,
+                      height: 40,
                     ),
-                    width: 40, // 동그라미 크기
-                    height: 40, // 동그라미 크기
-                  ),
-                )
-                    : SizedBox.shrink(); // 성공한 날짜가 아니면 마커를 표시하지 않음
+                  );
+                }
+                return SizedBox.shrink();
               },
             ),
             calendarStyle: CalendarStyle(
-              // 기본 날짜 셀 스타일 설정
               defaultDecoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.transparent,
@@ -107,7 +188,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ),
               selectedDecoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.brightPink.withOpacity(0.5), // 선택된 날짜 색상
+                color: AppColors.brightPink.withOpacity(0.5),
               ),
               outsideDecoration: BoxDecoration(
                 shape: BoxShape.circle,
@@ -115,37 +196,24 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ),
             ),
           ),
-          ElevatedButton(
-            onPressed: () => _markSuccess(_selectedDay), // 선택한 날짜를 성공한 날로 마크
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.pink, // 버튼의 배경색을 핑크로 설정
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30), // 버튼을 둥글게 만듦
-              ),
-            ),
-            child: Text(
-              '성공!',
-              style: TextStyle(
-                color: Colors.white, // 텍스트 색상을 흰색으로 설정
-              ),
-            ),
-          ),
           Expanded(
-            child:_completedDays.isEmpty
+            child: _completedDays.isEmpty
                 ? Center(
               child: Text(
-                '목록이 비어 있습니다',  // 비어있을 때 표시할 메시지
+                '목록이 비어 있습니다',
                 style: TextStyle(fontSize: 16, color: Colors.grey),
-                ),
+              ),
             )
-            : ListView.builder(
+                : ListView.builder(
               itemCount: _completedDays.length,
               itemBuilder: (context, index) {
                 DateTime completedDay = _completedDays.elementAt(index);
-                String formattedDate = '${completedDay.year}-${completedDay.month}-${completedDay.day}';
+                String formattedDate =
+                    '${completedDay.year}-${completedDay.month}-${completedDay.day}';
+                String challengeName = _completedChallenges[completedDay] ?? '';
                 return ListTile(
-                  title: Text('$formattedDate'),
-                  subtitle: Text('챌린지 내용'),
+                  title: Text(formattedDate),
+                  subtitle: Text(challengeName),
                   leading: Icon(Icons.check_circle, color: AppColors.aquaBlue),
                 );
               },
@@ -153,10 +221,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: CustomBottomNavigationBar(currentIndex:1),
+      bottomNavigationBar: CustomBottomNavigationBar(currentIndex: 1),
     );
-
   }
 }
-
-
