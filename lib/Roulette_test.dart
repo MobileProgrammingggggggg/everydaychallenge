@@ -225,18 +225,47 @@ class _RouletteState extends State<Roulette>
       _isLoading = true; // 로딩 상태로 변경
     });
 
-    final userUid = await _getCurrentUserUid(); // 현재 로그인된 유저의 UID 가져오기
-    if (userUid != null) {
-      // 1. 기존에 저장된 데이터는 무시하고 랜덤으로 새로운 5개 문서 번호를 저장
-      await _saveRandomChallengeDocuments(userUid, true);
+    try {
+      final userUid = await _getCurrentUserUid(); // 현재 로그인된 유저의 UID 가져오기
+      if (userUid == null) {
+        print("사용자 인증이 필요합니다.");
+        return;
+      }
 
-      // 2. 새로 고침을 위해 새로운 데이터를 가져오기
-      await _fetchChallengeItems(); // 데이터를 새로 가져오는 함수 호출
+      // Firestore에서 사용자 데이터 가져오기
+      final userDoc = FirebaseFirestore.instance.collection('users').doc(userUid);
+      final snapshot = await userDoc.get();
+
+      if (snapshot.exists) {
+        final data = snapshot.data();
+        final skipTickets = data?['챌린지 스킵권'] ?? 0; // 챌린지 스킵권 확인
+
+        if (skipTickets > 0) {
+          // 스킵권이 충분하면 진행
+          await userDoc.update({
+            '챌린지 스킵권': skipTickets - 1, // 스킵권 차감
+          });
+
+          print("챌린지 스킵권 1개 소모. 남은 스킵권: ${skipTickets - 1}");
+
+          // 1. 기존에 저장된 데이터는 무시하고 랜덤으로 새로운 5개 문서 번호를 저장
+          await _saveRandomChallengeDocuments(userUid, true);
+
+          // 2. 새로 고침을 위해 새로운 데이터를 가져오기
+          await _fetchChallengeItems(); // 데이터를 새로 가져오는 함수 호출
+        } else {
+          print("챌린지 스킵권이 부족합니다!");
+        }
+      } else {
+        print("사용자 문서를 찾을 수 없습니다.");
+      }
+    } catch (e) {
+      print("오류 발생: $e");
+    } finally {
+      setState(() {
+        _isLoading = false; // 로딩 끝
+      });
     }
-
-    setState(() {
-      _isLoading = false; // 로딩 끝
-    });
   }
 
   bool _isSpinning = false; // 룰렛 회전 중인지 여부
@@ -394,7 +423,17 @@ class _RouletteState extends State<Roulette>
       body: GradientBackground(
         child: Center(
           child: _isLoading
-              ? CircularProgressIndicator() // 로딩 중 표시
+              ? SizedBox(
+                  width: 200, // 원하는 너비
+                  height: 200, // 원하는 높이
+                  child: CircularProgressIndicator(
+                    strokeWidth: 40, // 로딩바의 두께 조정
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(Colors.pink[100]!),
+                    // 로딩바 색상 변경
+                    backgroundColor: Colors.grey[200], // 배경 색상 설정
+                  ),
+                ) // 로딩 중 표시
               : Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -419,14 +458,30 @@ class _RouletteState extends State<Roulette>
                       ],
                     ),
                     SizedBox(height: 20),
+
+                    // 그냥 돌리기
                     ElevatedButton(
                       onPressed: _isSpinning ? null : startSpin,
-                      child: Text("Spin"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.pink[100], // 버튼 배경색
+                        disabledBackgroundColor: Colors.pink[50], // 비활성화 상태 배경색
+                        foregroundColor: Colors.white, // 텍스트 색상
+                        disabledForegroundColor: Colors.grey, // 비활성화 상태 텍스트 색상
+                      ),
+                      child: Text("돌려돌려 돌림판"),
                     ),
-                    // 새로 고침 버튼 추가
+                    SizedBox(height: 10),
+
+                    // 리스트 새로 고침 버튼
                     ElevatedButton(
                       onPressed: _isLoading ? null : refreshList,
-                      child: Text("새로 고침"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.pink[100], // 버튼 배경색
+                        disabledBackgroundColor: Colors.pink[50], // 비활성화 상태 배경색
+                        foregroundColor: Colors.white, // 텍스트 색상
+                        disabledForegroundColor: Colors.grey, // 비활성화 상태 텍스트 색상
+                      ),
+                      child: Text("마법의 아이템으로 목록을 새로 가져올게"),
                     ),
                   ],
                 ),
@@ -485,7 +540,7 @@ class RoulettePainter extends CustomPainter {
       final textPainter = TextPainter(
         text: TextSpan(
           text: items[i],
-          style: TextStyle(color: Colors.white, fontSize: 16),
+          style: TextStyle(color: Colors.white, fontSize: 14),
         ),
         textDirection: TextDirection.ltr,
       );

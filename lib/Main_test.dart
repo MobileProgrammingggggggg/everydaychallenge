@@ -806,7 +806,7 @@ class ChallengePrompt extends StatelessWidget {
         children: [
           // "오늘의 챌린지:" 부분
           TextSpan(
-            text: "$titlePart : ",
+            text: "$titlePart",
             style: TextStyle(
               color: AppColors.textBlue, // 제목 부분 색상
               fontFamily: 'DoHyeon',
