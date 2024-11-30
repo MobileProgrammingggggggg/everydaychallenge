@@ -338,7 +338,7 @@ class _CountdownTextState extends State<CountdownText> {
           style: TextStyle(
             fontFamily: "DoHyeon",
             // fontWeight: FontWeight.bold,
-            color: AppColors.textBlue,
+            color: Colors.pink[200]!,
             fontSize: 28,
           ),
         ),
@@ -394,7 +394,7 @@ class _CharacterImageState extends State<CharacterImage>
           transform: Matrix4.rotationY(_rotationAnimation.value), // 3D 회전
           child: Image.asset(
             'assets/images/character.png', // 이미지 경로
-            height: 200,
+            height: 160,
           ),
         );
       },
@@ -465,41 +465,45 @@ class _QuoteWidgetState extends State<QuoteWidget> {
           padding: const EdgeInsets.all(5),
           child: Column(
             children: [
-              // 명언 내용 (좌측 정렬)
-              Text(
-                () {
-                  String quote = snapshot.data!;
-                  List<String> quoteParts =
-                      quote.split('-'); // 하이픈 기준으로 명언과 저자 구분
-                  return quoteParts[0]; // 명언 내용
-                }(),
-                style: TextStyle(
-                  fontFamily: "Diphylleia",
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  fontStyle: FontStyle.italic,
-                  color: Colors.black54,
+              Align(
+                alignment: Alignment.centerLeft, // 좌측 정렬
+                child: FittedBox(
+                  fit: BoxFit.scaleDown, // 텍스트 크기를 컨테이너에 맞게 줄이기
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                        () {
+                      String quote = snapshot.data!;
+                      List<String> quoteParts = quote.split('-'); // 하이픈 기준으로 명언과 저자 구분
+                      return quoteParts[0]; // 명언 내용
+                    }(),
+                    style: TextStyle(
+                      fontFamily: "Diphylleia",
+                      fontSize: 16, // 기본 글자 크기
+                      fontWeight: FontWeight.bold,
+                      fontStyle: FontStyle.italic,
+                      color: Colors.black54,
+                    ),
+                  ),
                 ),
-                textAlign: TextAlign.left, // 명언은 좌측 정렬
               ),
 
-              // 저자 (우측 정렬)
-              Text(
-                () {
-                  String quote = snapshot.data!;
-                  List<String> quoteParts = quote.split('-');
-                  return quoteParts.length > 1
-                      ? '-${quoteParts[1]}'
-                      : ''; // 저자 부분
-                }(),
-                style: TextStyle(
-                  fontFamily: "Diphylleia",
-                  fontSize: 14,
-                  fontWeight: FontWeight.normal,
-                  fontStyle: FontStyle.italic,
-                  color: Colors.black54,
+              SizedBox(height: 8), // 간격 추가
+              Align(
+                alignment: Alignment.centerRight, // 우측 정렬
+                child: Text(
+                      () {
+                    String quote = snapshot.data!;
+                    List<String> quoteParts = quote.split('-');
+                    return quoteParts.length > 1 ? '-${quoteParts[1]}' : ''; // 저자 부분
+                  }(),
+                  style: TextStyle(
+                    fontFamily: "Diphylleia",
+                    fontSize: 14,
+                    fontWeight: FontWeight.normal,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.black54,
+                  ),
                 ),
-                textAlign: TextAlign.right, // 저자는 우측 정렬
               ),
             ],
           ),
@@ -517,6 +521,7 @@ class ChallengeScreen extends StatefulWidget {
 class _ChallengeScreenState extends State<ChallengeScreen> {
   String selectedChallenge = "오늘의 챌린지는? ";
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final CustomWidth = 0.92; // 커스텀 Media 가로크기
 
   @override
   void initState() {
@@ -562,7 +567,7 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
       try {
         await _firestore.collection('users').doc(userId).set(
           {
-            'selectedChallenge': "오늘의 챌린지: $challenge",
+            'selectedChallenge': "오늘의 챌린지 : $challenge",
             'challengeDate': formattedDate,
             'challengeSelected': true, // 챌린지가 선택되었음을 표시
           },
@@ -597,9 +602,10 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
               Padding(
                 padding:
                     const EdgeInsets.only(top: 20, bottom: 5), // 상단과 하단 여백 설정
+
                 child: Container(
                   width: MediaQuery.of(context).size.width *
-                      0.88, // 화면 너비의 80%로 설정
+                      CustomWidth, // 화면 너비의 80%로 설정
                   padding: const EdgeInsets.all(10), // 내용 안에 여백
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.8), // 투명도 0.8 적용
@@ -625,7 +631,7 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
                 padding: const EdgeInsets.only(bottom: 5), // 상단과 하단 여백 설정
                 child: Container(
                   width: MediaQuery.of(context).size.width *
-                      0.88, // 화면 너비의 80%로 설정
+                      CustomWidth, // 화면 너비의 80%로 설정
                   padding: const EdgeInsets.all(10), // 내용 안에 여백
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.8), // 투명도 0.8 적용
@@ -651,7 +657,7 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 10), // 양옆 여백 설정
                 child: Container(
                   width: MediaQuery.of(context).size.width *
-                      0.88, // 화면 너비의 80%로 설정
+                      CustomWidth, // 화면 너비의 80%로 설정
                   padding: const EdgeInsets.all(10), // 내용 안에 여백
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.8), // 투명도 0.8 적용
@@ -699,13 +705,34 @@ class ChallengePrompt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      challengeText,
-      style: TextStyle(
-        color: AppColors.textBlue,
-        fontFamily: 'DoHyeon',
-        fontSize: 48,
-        // fontWeight: FontWeight.bold,
+    // 텍스트를 "오늘의 챌린지:"와 실제 챌린지 부분으로 분리
+    List<String> parts = challengeText.split(':');
+    String titlePart = parts[0];
+    String challengePart = parts.length > 1 ? parts[1] : "";
+
+    return RichText(
+      text: TextSpan(
+        children: [
+          // "오늘의 챌린지:" 부분
+          TextSpan(
+            text: "$titlePart : ",
+            style: TextStyle(
+              color: AppColors.textBlue, // 제목 부분 색상
+              fontFamily: 'DoHyeon',
+              fontSize: 36,
+              // fontWeight: FontWeight.bold,
+            ),
+          ),
+          // 실제 챌린지 부분
+          TextSpan(
+            text: challengePart.trim(), // 불필요한 공백 제거
+            style: TextStyle(
+              color: Colors.pink[200]!, // 챌린지 부분 색상
+              fontFamily: 'DoHyeon',
+              fontSize: 36,
+            ),
+          ),
+        ],
       ),
     );
   }
