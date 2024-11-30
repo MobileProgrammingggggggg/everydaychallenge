@@ -29,18 +29,34 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   // 성공한 날짜 및 챌린지 이름을 업데이트하는 메서드
   void _updateCompletedChallenge(DateTime day, String challengeName) {
+    // 이미 해당 날짜에 챌린지가 성공한 경우, 중복 추가를 방지
+    if (_completedDays.any((completedDay) =>
+    completedDay.year == day.year &&
+        completedDay.month == day.month &&
+        completedDay.day == day.day)) {
+      // 이미 존재하는 날짜라면 추가하지 않음
+      return;
+    }
+
     setState(() {
       _completedDays.add(day);
       _completedChallenges[day] = challengeName;
     });
 
+    String formattedDate = '${day.year}-${day.month}-${day.day}';
+
     // Firestore에 업데이트
-    FirebaseFirestore.instance
-        .collection('users')
-        .doc(FirebaseAuth.instance.currentUser!.uid)
-        .collection('completedChallenges')
-        .doc('${day.year}-${day.month}-${day.day}')
-        .set({'challengeName': challengeName});
+    FirebaseFirestore.instance.collection('users').doc(uid).set({
+      'completedDays': FieldValue.arrayUnion([formattedDate]),  // 완료된 날짜 배열
+      'completedChallenges': {
+        formattedDate: challengeName,  // 날짜별로 챌린지 이름 저장
+      }
+    }, SetOptions(merge: true)).then((_) {
+      print("Challenge updated successfully");
+    }).catchError((e) {
+      print("Error updating challenge: $e");
+    });
+
   }
 
   @override
@@ -51,51 +67,39 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
     _fetchCompletedChallenges(); // Firestore 데이터 초기화
     _listenToChallengeUpdates(); // 실시간 구독
-  }
 
-  // 성공한 날을 추가하는 함수
-  void _markSuccess(DateTime day, String challengeName) {
-    String formattedDate = '${day.year}-${day.month}-${day.day}';
-
-    setState(() {
-      // 성공한 날짜와 챌린지 이름을 저장
-      _completedDays.add(day);
-      _completedChallenges[day] = challengeName;
-    });
-
-    // Firestore에 저장
-    FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('completedChallenges')
-        .doc(formattedDate)
-        .set({'challengeName': challengeName});
   }
 
   void _fetchCompletedChallenges() async {
     // Firestore에서 데이터 읽기
-    QuerySnapshot snapshot = await FirebaseFirestore.instance
+    DocumentSnapshot snapshot = await FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
-        .collection('completedChallenges')
         .get();
 
-    setState(() {
-      for (var doc in snapshot.docs) {
-        DateTime day = DateTime.parse(doc.id); // 문서 ID를 날짜로 변환
-        String challengeName = doc['challengeName'];
+    if (snapshot.exists) {
+      Map<String, dynamic> data = snapshot.data() as Map<String, dynamic>;
 
-        _completedDays.add(day);
-        _completedChallenges[day] = challengeName;
-      }
-    });
+      // Firestore에서 완료된 날짜 목록과 챌린지 정보를 읽어옴
+      List<dynamic> completedDaysList = data['completedDays'] ?? [];
+      Map<String, dynamic> completedChallengesMap = data['completedChallenges'] ?? {};
+
+      setState(() {
+        // Firestore에서 받은 완료된 날짜들을 _completedDays와 _completedChallenges에 추가
+        for (String dateStr in completedDaysList) {
+          DateTime completedDay = DateTime.parse(dateStr);
+          _completedDays.add(completedDay);
+          _completedChallenges[completedDay] = completedChallengesMap[dateStr] ?? '';
+        }
+      });
+    }
   }
 
   void _listenToChallengeUpdates() {
     // Firestore의 `users` 컬렉션에서 데이터 읽기
     FirebaseFirestore.instance
         .collection('users')
-        .doc(uid) // 유저 ID를 적절히 바꾸세요
+        .doc(uid)
         .snapshots()
         .listen((snapshot) {
       if (snapshot.exists) {
@@ -104,10 +108,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
           // 성공한 날짜를 추가
           DateTime today = DateTime.now();
           String challengeName = data['selectedChallenge'] ?? 'Unknown Challenge';
-
+          _updateCompletedChallenge(today, challengeName);
           setState(() {
-            _completedDays.add(today);
-            _completedChallenges[today] = challengeName;
+            //_completedDays.add(today);
+            //_completedChallenges[today] = challengeName;
           });
         }
       }
