@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'CustomBottomNavigationBar.dart';
-import 'Ask_again_screen.dart'; // Ask_again 가져오기
+import 'Ask_again_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 void main() {
   runApp(MaterialApp(
@@ -14,15 +16,38 @@ class StoreScreen extends StatefulWidget {
 }
 
 class _StoreScreenState extends State<StoreScreen> {
-  int points = 130; // 초기 포인트 설정
-  Map<String, int> purchasedItems = {}; // 구매한 아이템들 저장
+  String uid = FirebaseAuth.instance.currentUser!.uid;
+  int points = 0;
 
-  void _buyItem(String itemName, int itemCost) {
+  @override
+  void initState() {
+    super.initState();
+    getUserInfo();
+  }
+
+  getUserInfo() async {
+    var result = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    //print(result.data());
+    if (result.exists) {
+      setState(() {
+        points = result.data()?['points'] ?? 0; // 'points' 필드에서 포인트 값을 가져옴
+      });
+    }
+  }
+  Map<String, int> purchasedItems = {};
+
+  void _buyItem(String itemName, int itemCost) async {
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      'points': FieldValue.increment(-itemCost),
+      '$itemName': FieldValue.increment(1),
+    });
+
     setState(() {
       points -= itemCost;
       purchasedItems.update(itemName, (value) => value + 1, ifAbsent: () => 1);
     });
   }
+
 
   void _showPurchaseDialog(BuildContext context, String itemName, int itemCost) {
     showDialog(
@@ -31,7 +56,7 @@ class _StoreScreenState extends State<StoreScreen> {
         message: "$itemName를 구매하시겠습니까?",
       ),
     ).then((value) {
-      print("다이얼로그 반환 값: $value"); // 반환 값 확인용 로그
+      //print("다이얼로그 반환 값: $value"); // 반환 값 확인용 로그
       if (value == 1) {
         if (points >= itemCost) {
           _buyItem(itemName, itemCost);
@@ -52,65 +77,179 @@ class _StoreScreenState extends State<StoreScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("구매 완료"),
-        content: Text("$itemName 구매가 완료되었습니다."),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: Colors.black, width: 3),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Center(
+              child: Image.asset(
+                'assets/images/good.png',
+                height: 100,
+              ),
+            ),
+            SizedBox(height: 16),
+            Center(
+              child: Text(
+                "$itemName 구매가 완료되었습니다.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ],
+        ),
         actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: Text("확인"),
+          Center(
+            child: SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                style: TextButton.styleFrom(
+                  backgroundColor: Color.fromRGBO(92, 103, 227, 1),
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text(
+                  '확인',
+                  style: TextStyle(
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPurchasedItems() {
-    return Positioned(
-      top: 16,
-      right: 16,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: purchasedItems.entries.map((entry) {
-          IconData icon;
-          switch (entry.key) {
-            case "룰렛 재추첨권":
-              icon = Icons.refresh;
-              break;
-            case "챌린지 스킵권":
-              icon = Icons.flash_on;
-              break;
-            case "하루 연장권":
-              icon = Icons.access_time;
-              break;
-            case "포인트 2배권":
-              icon = Icons.double_arrow;
-              break;
-            case "기록 삭제권":
-              icon = Icons.delete_forever;
-              break;
-            case "난이도 선택권":
-              icon = Icons.auto_fix_high;
-              break;
-            default:
-              icon = Icons.help_outline;
-          }
-          return Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 24, color: Colors.amber),
-              SizedBox(width: 4),
-              Text(
-                '${entry.value}',
-                style: TextStyle(fontSize: 12, color: Colors.black),
+  Future<Map<String, int>> _fetchPurchasedItems() async {
+    var result = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+
+    // 초기 아이템 목록
+    Map<String, int> items = {
+      "기록 삭제권": 0,
+      "난이도 선택권": 0,
+      "룰렛 재추첨권": 0,
+      "챌린지 스킵권": 0,
+      "포인트 2배권": 0,
+      "하루 연장권": 0,
+    };
+
+    if (result.exists) {
+      // Firestore에서 가져온 데이터를 사용하여 아이템 수를 업데이트
+      items["기록 삭제권"] = result.data()?['기록 삭제권'] ?? 0;
+      items["난이도 선택권"] = result.data()?['난이도 선택권'] ?? 0;
+      items["룰렛 재추첨권"] = result.data()?['룰렛 재추첨권'] ?? 0;
+      items["챌린지 스킵권"] = result.data()?['챌린지 스킵권'] ?? 0;
+      items["포인트 2배권"] = result.data()?['포인트 2배권'] ?? 0;
+      items["하루 연장권"] = result.data()?['하루 연장권'] ?? 0;
+    }
+
+    return items;
+  }
+
+  void _showInventoryDialog(BuildContext context) async {
+    Map<String, int> items = await _fetchPurchasedItems();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          "아이템 보유 현황",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        content: Container(
+          width: 300,
+          height: 200,
+          child: GridView.count(
+            crossAxisCount: 3,
+            childAspectRatio: 1,
+            children: items.entries.map((entry) {
+              IconData icon;
+              switch (entry.key) {
+                case "룰렛 재추첨권":
+                  icon = Icons.refresh;
+                  break;
+                case "챌린지 스킵권":
+                  icon = Icons.flash_on;
+                  break;
+                case "하루 연장권":
+                  icon = Icons.access_time;
+                  break;
+                case "포인트 2배권":
+                  icon = Icons.double_arrow;
+                  break;
+                case "기록 삭제권":
+                  icon = Icons.delete_forever;
+                  break;
+                case "난이도 선택권":
+                  icon = Icons.auto_fix_high;
+                  break;
+                default:
+                  icon = Icons.help_outline;
+              }
+              return GestureDetector(
+                onTap: () {
+                  print("${entry.key} 클릭됨");
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(icon, size: 30, color: Colors.amber),
+                    SizedBox(height: 4),
+                    Text(entry.key, style: TextStyle(fontSize: 14)),
+                    Text('${entry.value}개', style: TextStyle(fontSize: 12)),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        actions: [
+          Container(
+            width: double.infinity,
+            child: TextButton(
+              style: TextButton.styleFrom(
+                backgroundColor: Color.fromRGBO(92, 103, 227, 1),
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 16),
               ),
-            ],
-          );
-        }).toList(),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                '확인',
+                style: TextStyle(
+                  fontSize: 18,
+                ),
+              ),
+            ),
+          ),
+        ],
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: Colors.black, width: 3),
+          borderRadius: BorderRadius.circular(20),
+        ),
       ),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -127,6 +266,12 @@ class _StoreScreenState extends State<StoreScreen> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.inventory),
+            onPressed: () => _showInventoryDialog(context),
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -135,7 +280,7 @@ class _StoreScreenState extends State<StoreScreen> {
               Padding(
                 padding: EdgeInsets.symmetric( horizontal: 32, vertical: 16),
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8), // 여백 추가
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
                     color: Colors.pink[200],
                     borderRadius: BorderRadius.circular(20),
@@ -214,7 +359,6 @@ class _StoreScreenState extends State<StoreScreen> {
               ),
             ],
           ),
-          _buildPurchasedItems(), // 오른쪽 상단에 구매한 아이템 표시
         ],
       ),
       bottomNavigationBar: CustomBottomNavigationBar(currentIndex: 2),
