@@ -32,6 +32,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false, // 디버그 버튼 가리기
       home: AuthenticationWrapper(),
+
     );
   }
 }
@@ -178,6 +179,8 @@ class _HeaderSectionState extends State<HeaderSection> {
       });
     }
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -618,6 +621,7 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
   void initState() {
     super.initState();
     _loadChallenge();
+    dateUpdateChallenge(context);
   }
 
   // Firestore에서 저장된 챌린지를 로드하는 메서드
@@ -643,6 +647,49 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
       print("No user is currently logged in");
     }
   }
+
+  // 날짜 변경 체크 및 업데이트
+  void dateUpdateChallenge(BuildContext context) async {
+    User? currentUser = FirebaseAuth.instance.currentUser;
+
+
+    if (currentUser != null) {
+      String userId = currentUser.uid;
+
+
+      // Firestore에서 사용자 데이터 가져오기
+      DocumentSnapshot userDoc =
+      await _firestore.collection('users').doc(userId).get();
+
+      if (userDoc.exists) {
+        Map<String, dynamic> userData =
+        userDoc.data() as Map<String, dynamic>;
+
+        // Firestore에서 가져온 날짜
+        String? challengeDate = userData['challengeDate'];
+
+        // 현재 날짜
+        DateTime currentDate = DateTime.now();
+        String formattedDate =
+            "${currentDate.year}-${currentDate.month}-${currentDate.day}";
+
+
+        if (challengeDate != formattedDate) {
+          // 날짜가 변경되었으면 flag를 1로 설정
+          await _firestore.collection('users').doc(userId).update({
+            'challengeFlag': 1,
+            'challengeDate': formattedDate, // 날짜를 업데이트
+            'challengeSelected': false,
+            'selectedChallenge' : "오늘의 챌린지는? ",
+          });
+
+          print("Date updated and flag set to 1");
+          print(formattedDate);
+        }
+      }
+    }
+  }
+
 
   // 챌린지 업데이트 및 Firestore에 저장하는 메서드
   void updateChallenge(String challenge) async {
