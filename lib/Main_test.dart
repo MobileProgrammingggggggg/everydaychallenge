@@ -9,6 +9,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'firebase_initializer.dart';
 import 'package:get/get.dart';
+import 'global.dart'; // 추가
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:math';
@@ -20,7 +21,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options:
-    DefaultFirebaseOptions.currentPlatform, // 웹에서 FirebaseOptions을 가져옵니다.
+        DefaultFirebaseOptions.currentPlatform, // 웹에서 FirebaseOptions을 가져옵니다.
   );
   runApp(MyApp());
 }
@@ -77,11 +78,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           leading: LogoutIcon(),
           actions: [NotificationIcon()],
         ),
-        //Divider(
-        // thickness: 1, // 선의 두께 설정
-        // color: Colors.grey, // 선의 색상 설정
-        // height: 1, // Divider의 높이 추가
-        //),
       ],
     );
   }
@@ -133,43 +129,6 @@ class LogoutIcon extends StatelessWidget {
   }
 }
 
-class NotificationIcon extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.topRight,
-      children: [
-        IconButton(
-          icon: Icon(Icons.notifications, color: Colors.blue[700]),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) =>
-                      Notification_Screen()), // NotificationScreen으로 이동
-            );
-          },
-        ),
-        Positioned(
-          right: 8,
-          top: 8,
-          child: Container(
-            padding: EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              color: Colors.red,
-              shape: BoxShape.circle,
-            ),
-            child: Text(
-              "1",
-              style: TextStyle(color: Colors.white, fontSize: 10),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class GradientBackground extends StatelessWidget {
   final Widget child;
 
@@ -211,7 +170,8 @@ class _HeaderSectionState extends State<HeaderSection> {
   }
 
   getUserInfo() async {
-    var result = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    var result =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
     if (result.exists) {
       setState(() {
         points = result.data()?['points'] ?? 0; // 'points' 필드에서 포인트 값을 가져옴
@@ -276,7 +236,67 @@ class _HeaderSectionState extends State<HeaderSection> {
   }
 }
 
+class NotificationIcon extends StatefulWidget {
+  @override
+  _NotificationIconState createState() => _NotificationIconState();
+}
 
+class _NotificationIconState extends State<NotificationIcon> {
+  late Timer _notificationTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    // 알림 상태를 주기적으로 업데이트하기 위한 타이머 시작
+    _notificationTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {}); // 상태를 업데이트하여 UI를 갱신
+    });
+  }
+
+  @override
+  void dispose() {
+    _notificationTimer.cancel(); // 타이머 종료
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.topRight,
+      children: [
+        IconButton(
+          icon: Icon(Icons.notifications, color: Colors.blue[700]),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    Notification_Screen(), // NotificationScreen으로 이동
+              ),
+            );
+          },
+        ),
+        // 알림 개수를 표시하는 위젯 추가
+        if (globalNotifications.isNotEmpty) // 알림이 있을 때만 표시
+          Positioned(
+            right: 8,
+            top: 8,
+            child: Container(
+              padding: EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                color: Colors.red,
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                "${globalNotifications.length}", // 알림 개수 표시
+                style: TextStyle(color: Colors.white, fontSize: 10),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
 
 class CountdownText extends StatefulWidget {
   @override
@@ -287,15 +307,21 @@ class _CountdownTextState extends State<CountdownText> {
   late int _hours;
   late int _minutes;
   late int _seconds;
-
   late Timer _timer;
+  late Timer _notificationTimer; // 알림 확인을 위한 타이머 추가
 
-  // 현재 시간과 자정(밤 12시)까지의 남은 시간을 계산
+  @override
+  void initState() {
+    super.initState();
+    _calculateTimeUntilMidnight(); // 자정까지의 시간 계산
+    _startCountdown(); // 카운트다운 타이머 시작
+    _startNotificationCheck(); // 알림 확인 타이머 시작
+  }
+
   void _calculateTimeUntilMidnight() {
     final now = DateTime.now();
     final midnight =
-    DateTime(now.year, now.month, now.day + 1); // 자정 (다음 날 00:00)
-
+        DateTime(now.year, now.month, now.day + 1); // 자정 (다음 날 00:00)
     final difference = midnight.difference(now);
 
     setState(() {
@@ -305,7 +331,6 @@ class _CountdownTextState extends State<CountdownText> {
     });
   }
 
-  // 타이머 시작
   void _startCountdown() {
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       if (_seconds > 0) {
@@ -326,19 +351,54 @@ class _CountdownTextState extends State<CountdownText> {
       } else {
         _timer.cancel(); // 타이머 종료
       }
+
+      // 남은 시간이 특정 값일 때 flag 확인
+      if (_hours == 10 && _minutes == 0 && _seconds == 0 ||
+          _hours == 5 && _minutes == 0 && _seconds == 0 ||
+          _hours == 2 && _minutes == 0 && _seconds == 0 ||
+          _hours == 1 && _minutes == 0 && _seconds == 0) {
+        _checkChallengeFlag();
+      }
     });
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _calculateTimeUntilMidnight(); // 자정까지의 시간 계산
-    _startCountdown(); // 타이머 시작
+  void _startNotificationCheck() {
+    _notificationTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {}); // 상태를 업데이트하여 UI를 갱신
+    });
+  }
+
+  Future<void> _checkChallengeFlag() async {
+    String uid = FirebaseAuth.instance.currentUser!.uid;
+    var result =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+
+    if (result.exists) {
+      var data = result.data()?['challengeFlag'];
+      if (data != null && data != 3) {
+        // 알람 로직 추가
+        _sendAlarmNotification();
+      }
+    }
+  }
+
+  void _sendAlarmNotification() {
+    String message = "$_hours시간 $_minutes분 $_seconds초 남았습니다. 챌린지가 곧 마감됩니다!";
+
+    // 알림을 전역 리스트에 추가
+    globalNotifications.add(NotificationCardData(
+      icon: Icons.hourglass_bottom,
+      title: "챌린지가 곧 마감됩니다!",
+      description: message,
+    ));
   }
 
   @override
   void dispose() {
-    _timer.cancel(); // 타이머 종료
+    _timer.cancel(); // 카운트다운 타이머 종료
+    _notificationTimer.cancel(); // 알림 확인 타이머 종료
+
+    globalNotifications.clear(); // 알림 초기화
     super.dispose();
   }
 
@@ -352,8 +412,7 @@ class _CountdownTextState extends State<CountdownText> {
           "남은 시간 : ",
           style: TextStyle(
             fontFamily: "DoHyeon",
-            // fontWeight: FontWeight.bold,
-            color: AppColors.textBlue,
+            color: Colors.blue, // AppColors.textBlue로 대체 가능
             fontSize: 32,
           ),
         ),
@@ -362,11 +421,12 @@ class _CountdownTextState extends State<CountdownText> {
           "$_hours시간 $_minutes분 $_seconds초",
           style: TextStyle(
             fontFamily: "DoHyeon",
-            // fontWeight: FontWeight.bold,
             color: Colors.pink[200]!,
             fontSize: 28,
           ),
         ),
+        // 알림 개수 표시 (NotificationIcon 위젯에서 표시)
+        // 이 부분은 NotificationIcon에서 처리합니다.
       ],
     );
   }
@@ -437,7 +497,7 @@ class QuoteService {
       var docs = snapshot.docs;
       if (docs.isNotEmpty) {
         var randomIndex =
-        Random().nextInt(docs.length); // 0부터 docs.length-1 사이의 랜덤 인덱스 선택
+            Random().nextInt(docs.length); // 0부터 docs.length-1 사이의 랜덤 인덱스 선택
         return docs[randomIndex]['quote']; // 랜덤 인덱스에 해당하는 명언 반환
       }
       return '명언을 불러올 수 없습니다.'; // 데이터가 없으면 기본 문구 반환
@@ -473,8 +533,10 @@ class _QuoteWidgetState extends State<QuoteWidget> {
               width: 40, // 원하는 가로 크기 설정
               height: 40, // 원하는 세로 크기 설정
               child: CircularProgressIndicator(
-                strokeWidth: 10, // 로딩바의 두께 조정
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.pink[100]!), // 로딩바 색상 변경
+                strokeWidth: 10,
+                // 로딩바의 두께 조정
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.pink[100]!),
+                // 로딩바 색상 변경
                 backgroundColor: Colors.grey[200], // 배경 색상 설정
               ),
             ),
@@ -496,14 +558,16 @@ class _QuoteWidgetState extends State<QuoteWidget> {
                   fit: BoxFit.scaleDown, // 텍스트 크기를 컨테이너에 맞게 줄이기
                   alignment: Alignment.centerLeft,
                   child: Text(
-                        () {
+                    () {
                       String quote = snapshot.data!;
-                      List<String> quoteParts = quote.split('-'); // 하이픈 기준으로 명언과 저자 구분
+                      List<String> quoteParts =
+                          quote.split('-'); // 하이픈 기준으로 명언과 저자 구분
                       return quoteParts[0]; // 명언 내용
                     }(),
                     style: TextStyle(
                       fontFamily: "Diphylleia",
-                      fontSize: 16, // 기본 글자 크기
+                      fontSize: 16,
+                      // 기본 글자 크기
                       fontWeight: FontWeight.bold,
                       fontStyle: FontStyle.italic,
                       color: Colors.black54,
@@ -516,10 +580,12 @@ class _QuoteWidgetState extends State<QuoteWidget> {
               Align(
                 alignment: Alignment.centerRight, // 우측 정렬
                 child: Text(
-                      () {
+                  () {
                     String quote = snapshot.data!;
                     List<String> quoteParts = quote.split('-');
-                    return quoteParts.length > 1 ? '-${quoteParts[1]}' : ''; // 저자 부분
+                    return quoteParts.length > 1
+                        ? '-${quoteParts[1]}'
+                        : ''; // 저자 부분
                   }(),
                   style: TextStyle(
                     fontFamily: "Diphylleia",
@@ -563,7 +629,7 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
 
       try {
         DocumentSnapshot snapshot =
-        await _firestore.collection('users').doc(userId).get();
+            await _firestore.collection('users').doc(userId).get();
 
         if (snapshot.exists && snapshot.data() != null) {
           setState(() {
@@ -626,7 +692,7 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
               // 첫 번째 박스: HeaderSection을 감싸는 흰색 박스
               Padding(
                 padding:
-                const EdgeInsets.only(top: 20, bottom: 5), // 상단과 하단 여백 설정
+                    const EdgeInsets.only(top: 20, bottom: 5), // 상단과 하단 여백 설정
 
                 child: Container(
                   width: MediaQuery.of(context).size.width *
@@ -635,7 +701,7 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.8), // 투명도 0.8 적용
                     borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(20),  // 위쪽만 둥글게
+                      top: Radius.circular(20), // 위쪽만 둥글게
                       bottom: Radius.circular(10),
                     ),
                     boxShadow: [
@@ -661,7 +727,7 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.8), // 투명도 0.8 적용
                     borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(10),  // 위쪽만 둥글게
+                      top: Radius.circular(10), // 위쪽만 둥글게
                       bottom: Radius.circular(10),
                     ),
                     boxShadow: [
@@ -687,7 +753,7 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.8), // 투명도 0.8 적용
                     borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(10),  // 위쪽만 둥글게
+                      top: Radius.circular(10), // 위쪽만 둥글게
                       bottom: Radius.circular(20),
                     ),
                     boxShadow: [

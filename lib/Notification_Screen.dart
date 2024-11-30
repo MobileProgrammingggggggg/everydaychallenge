@@ -1,59 +1,79 @@
 import 'package:flutter/material.dart';
+import 'global.dart';
 
-class Notification_Screen extends StatelessWidget {
+class Notification_Screen extends StatefulWidget {
+  @override
+  _NotificationScreenState createState() => _NotificationScreenState();
+}
+
+class _NotificationScreenState extends State<Notification_Screen> {
+  List<NotificationCardData> notifications = [];
+
+  @override
+  void initState() {
+    super.initState();
+    notifications = globalNotifications; // 전역 변수에서 알림 가져오기
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text("알림"),
-        backgroundColor: Colors.pink[100], // AppBar 배경색 변경
+        backgroundColor: Colors.pink[100],
       ),
-      body: ListView(
+      body: notifications.isEmpty
+          ? _buildEmptyNotification()
+          : ListView(
+              children: notifications.map((notification) {
+                return NotificationCard(
+                  icon: notification.icon,
+                  title: notification.title,
+                  description: notification.description,
+                  titleStyle:
+                      TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  descriptionStyle:
+                      TextStyle(color: Colors.grey[700], fontSize: 14),
+                );
+              }).toList(),
+            ),
+      floatingActionButton: TextButton(
+        onPressed: () {
+          setState(() {
+            globalNotifications.clear(); // 알림 초기화
+            notifications.clear(); // 현재 표시된 알림도 초기화
+          });
+        },
+        child: Text("알림 전체 지우기", style: TextStyle(color: Colors.white)),
+        style: TextButton.styleFrom(
+          backgroundColor: Colors.pink[100], // 배경색
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyNotification() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          NotificationCard(
-            icon: Icons.emoji_events, // 도전 아이콘
-            title: "3일 연속 성공!",
-            description: "당신의 열정이 빛나고 있어요!",
-            time: "방금 전",
-            titleStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            descriptionStyle: TextStyle(color: Colors.grey[700], fontSize: 14),
-            timeStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
+          Icon(Icons.notifications_off, size: 80, color: Colors.grey), // 아이콘 추가
+          SizedBox(height: 20), // 간격 추가
+          Text(
+            "현재 알림이 없습니다.",
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[600],
+            ),
           ),
-          NotificationCard(
-            icon: Icons.hourglass_bottom, // 마감 아이콘
-            title: "챌린지 마감 3시간 전",
-            description: "마감까지 3시간 남았습니다! 지금 도전하세요!",
-            time: "3시간 전",
-            titleStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            descriptionStyle: TextStyle(color: Colors.grey[700], fontSize: 14),
-            timeStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
-          ),
-          NotificationCard(
-            icon: Icons.flag, // 챌린지 시작 아이콘
-            title: "오늘 챌린지 시작!",
-            description: "오늘의 챌린지가 시작됐습니다! 도전을 기다리고 있어요!",
-            time: "오늘",
-            titleStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            descriptionStyle: TextStyle(color: Colors.grey[700], fontSize: 14),
-            timeStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
-          ),
-          NotificationCard(
-            icon: Icons.shopping_cart, // 상점 아이콘
-            title: "상점에 새로운 아이템 입고",
-            description: "새로운 아이템이 상점에 도착했습니다! 지금 확인해보세요!",
-            time: "1시간 전",
-            titleStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            descriptionStyle: TextStyle(color: Colors.grey[700], fontSize: 14),
-            timeStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
-          ),
-          NotificationCard(
-            icon: Icons.insert_chart, // 주간 요약 아이콘
-            title: "주간요약",
-            description: "한 주간의 성과를 확인하세요! 멋진 한 주였어요!",
-            time: "어제",
-            titleStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            descriptionStyle: TextStyle(color: Colors.grey[700], fontSize: 14),
-            timeStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
+          SizedBox(height: 10), // 간격 추가
+          Text(
+            "알림이 생기면 여기에서 확인하세요!",
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[400],
+            ),
           ),
         ],
       ),
@@ -61,25 +81,31 @@ class Notification_Screen extends StatelessWidget {
   }
 }
 
+class NotificationCardData {
+  final IconData icon;
+  final String title;
+  final String description;
+
+  NotificationCardData({
+    required this.icon,
+    required this.title,
+    required this.description,
+  });
+}
+
 class NotificationCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String description;
-  final String time;
-  final String? subtitle;
   final TextStyle titleStyle;
   final TextStyle descriptionStyle;
-  final TextStyle timeStyle;
 
   NotificationCard({
     required this.icon,
     required this.title,
     required this.description,
-    required this.time,
-    this.subtitle,
     required this.titleStyle,
     required this.descriptionStyle,
-    required this.timeStyle,
   });
 
   @override
@@ -88,28 +114,19 @@ class NotificationCard extends StatelessWidget {
       margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            if (subtitle != null)
-              Text(
-                subtitle!,
-                style: TextStyle(color: Colors.grey),
+            Icon(icon, color: Colors.amber, size: 24),
+            SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: titleStyle),
+                  Text(description, style: descriptionStyle),
+                  SizedBox(height: 5),
+                ],
               ),
-            Row(
-              children: [
-                Icon(icon, color: Colors.amber, size: 24),
-                SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: titleStyle),
-                    Text(description, style: descriptionStyle),
-                    SizedBox(height: 5),
-                    Text(time, style: timeStyle),
-                  ],
-                ),
-              ],
             ),
           ],
         ),
@@ -117,4 +134,3 @@ class NotificationCard extends StatelessWidget {
     );
   }
 }
-//ㅇ

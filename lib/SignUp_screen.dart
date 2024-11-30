@@ -39,24 +39,35 @@ class SignUpScreen extends StatelessWidget {
 
     try {
       // Firebase Authentication으로 회원가입
-      final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      final credential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
       // Firestore에 추가 정보(ID) 저장
-      await FirebaseFirestore.instance.collection('users').doc(credential.user?.uid).set({
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(credential.user?.uid)
+          .set({
         'id': id,
         'email': email,
         'createdAt': DateTime.now(),
         'password': password,
+        'points': 1000, // 테스트용 포인트 1000 지급
+        '기록 삭제권': 0, // 아이템은 기본개수는 0으로 할것이지만
+        '난이도 선택권': 0, // 초기화면에서 잘 불러와지는지 확인하기위해 임의의 개수 집어넣었고
+        '룰렛 재추첨권': 0, // 아이템을 구매하면 실시간으로 업데이트되어 인벤토리에서 확인 가능함
+        '챌린지 스킵권': 1,
+        '포인트 2배권': 2,
+        '하루 연장권': 3,
       });
 
       print('회원가입 성공: ${credential.user?.email}');
       _showErrorDialog(context, '회원가입 성공! 로그인 화면으로 이동하세요.');
       Navigator.pop(context); // 로그인 화면으로 이동
     } on FirebaseAuthException catch (e) {
-      print('Firebase Auth Error: ${e.code}');  // 에러 코드 출력
+      print('Firebase Auth Error: ${e.code}'); // 에러 코드 출력
       if (e.code == 'email-already-in-use') {
         _showErrorDialog(context, '이미 등록된 이메일입니다.');
       } else if (e.code == 'weak-password') {
@@ -98,7 +109,8 @@ class SignUpScreen extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Email', style: TextStyle(fontSize: 16, color: Colors.black)),
+                    Text('Email',
+                        style: TextStyle(fontSize: 16, color: Colors.black)),
                     SizedBox(height: 5),
                     TextField(
                       controller: _emailController,
@@ -106,7 +118,8 @@ class SignUpScreen extends StatelessWidget {
                       cursorColor: Colors.black,
                       decoration: InputDecoration(
                         labelText: 'Email을 입력해주세요...',
-                        labelStyle: TextStyle(color: Colors.black54, fontSize: 12),
+                        labelStyle:
+                            TextStyle(color: Colors.black54, fontSize: 12),
                         border: OutlineInputBorder(),
                         enabledBorder: OutlineInputBorder(
                           borderSide: BorderSide(color: Colors.black),
@@ -118,7 +131,8 @@ class SignUpScreen extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: 20),
-                    Text('ID', style: TextStyle(fontSize: 16, color: Colors.black)),
+                    Text('ID',
+                        style: TextStyle(fontSize: 16, color: Colors.black)),
                     SizedBox(height: 5),
                     TextField(
                       controller: _idController,
@@ -126,7 +140,8 @@ class SignUpScreen extends StatelessWidget {
                       cursorColor: Colors.black,
                       decoration: InputDecoration(
                         labelText: 'ID를 입력해주세요...',
-                        labelStyle: TextStyle(color: Colors.black54, fontSize: 12),
+                        labelStyle:
+                            TextStyle(color: Colors.black54, fontSize: 12),
                         border: OutlineInputBorder(),
                         enabledBorder: OutlineInputBorder(
                           borderSide: BorderSide(color: Colors.black),
@@ -138,7 +153,8 @@ class SignUpScreen extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: 20),
-                    Text('Password', style: TextStyle(fontSize: 16, color: Colors.black)),
+                    Text('Password',
+                        style: TextStyle(fontSize: 16, color: Colors.black)),
                     SizedBox(height: 5),
                     TextField(
                       controller: _passwordController,
@@ -147,7 +163,8 @@ class SignUpScreen extends StatelessWidget {
                       cursorColor: Colors.black,
                       decoration: InputDecoration(
                         labelText: 'Password를 입력해주세요...',
-                        labelStyle: TextStyle(color: Colors.black54, fontSize: 12),
+                        labelStyle:
+                            TextStyle(color: Colors.black54, fontSize: 12),
                         border: OutlineInputBorder(),
                         enabledBorder: OutlineInputBorder(
                           borderSide: BorderSide(color: Colors.black),
