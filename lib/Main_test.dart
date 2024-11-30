@@ -13,7 +13,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:math';
 import 'dart:async';
-// import 'Community_Screen.dart';
+// import 'Community_Provider.dart';
 
 // 메인 화면
 Future<void> main() async {

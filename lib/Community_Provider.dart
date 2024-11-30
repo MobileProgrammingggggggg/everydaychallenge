@@ -163,14 +163,16 @@ class CommunityScreen extends StatelessWidget {
         home: Scaffold(
             appBar: AppBar(
               backgroundColor: Colors.pink[100],
-              title: Text('커뮤니티 게시판',
+              title: Text(
+                '챌린지 커뮤니티 게시판',
                 style: TextStyle(
                   color: Colors.black,
-                  fontSize: 24,
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
-                ),),
+                ),
+              ),
               leading: IconButton(
-                icon: Icon(Icons.arrow_back), // 뒤로가기 직접 추가
+                icon: Icon(Icons.arrow_back),
                 onPressed: () {
                   Navigator.pushReplacement(
                     context,
@@ -195,52 +197,79 @@ class CommunityScreen extends StatelessWidget {
             ),
             body: Consumer<PostProvider>(
               builder: (context, postProvider, child) {
-                //final posts = postProvider.currentPosts; // posts를 실제로 사용
                 return Column(
                   children: [
                     Expanded(
                       child: ListView.builder(
-                        itemCount:
-                            postProvider.currentPosts.length, // 삭제 후 정확한 길이로 변경
+                        itemCount: postProvider.currentPosts.length,
                         itemBuilder: (context, index) {
-                          if (index >= postProvider.currentPosts.length) {
-                            return SizedBox.shrink(); // 인덱스가 범위를 벗어난 경우 빈 위젯 반환
-                          }
                           final post = postProvider.currentPosts[index];
                           final commentCount =
-                              postProvider.getCommentCount(index); // 댓글 수
-                          return Card(
-                            margin: EdgeInsets.all(2.0),
-                            child: ListTile(
-                              title: Text(
-                                post['title'],
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              subtitle: Text(
-                                '날짜: ${post['date']} | 작성자: ${post['author']} | 조회수: ${post['view']} | 댓글 수: $commentCount',
-                              ),
-                              onTap: () {
-                                // 조회수 증가
-                                postProvider.incrementViews(index);
+                              postProvider.getCommentCount(index);
 
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => PostDetailScreen(
-                                      post: post,
-                                      postIndex:
-                                          (postProvider.currentPage - 1) * 8 +
-                                              index,
-                                    ),
+                          return Column(
+                            children: [
+                              ListTile(
+                                contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 10.0, vertical: 0),
+                                title: Text(
+                                  post['title'],
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14),
+                                ),
+                                subtitle: Padding(
+                                  padding: const EdgeInsets.only(top: 2.0),
+                                  child: Text(
+                                    '날짜: ${post['date']} | 작성자: ${post['author']} | 조회수 ${post['view']}',
+                                    style: TextStyle(
+                                        color: Colors.grey[600], fontSize: 12),
                                   ),
-                                );
-                              },
-                            ),
+                                ),
+                                trailing: Padding(
+                                  padding: EdgeInsets.only(right: 8.0),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.comment,
+                                          color: Colors.pink[300], size: 18),
+                                      SizedBox(height: 4),
+                                      Text(
+                                        '$commentCount',
+                                        style: TextStyle(
+                                          color: Colors.pink[300],
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                onTap: () {
+                                  postProvider.incrementViews(index);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => PostDetailScreen(
+                                        post: post,
+                                        postIndex:
+                                            (postProvider.currentPage - 1) * 8 +
+                                                index,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              Divider(
+                                thickness: 1.0,
+                                color: Colors.grey[300],
+                                height: 2.0, // Divider 간격 좁히기
+                              ),
+                            ],
                           );
                         },
                       ),
                     ),
-                    // 페이지 네이션 컨트롤 추가
                     PaginationControls(),
                   ],
                 );
@@ -356,65 +385,121 @@ class _WritePostScreenState extends State<WritePostScreen> {
           },
         ),
       ),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: titleController,
-              decoration: InputDecoration(labelText: '제목'),
-            ),
-            TextField(
-              controller: authorController,
-              decoration: InputDecoration(labelText: '작성자'),
-            ),
-            TextField(
-              controller: contentController,
-              decoration: InputDecoration(labelText: '내용'),
-              maxLines: 10,
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                final title = titleController.text;
-                final author = authorController.text;
-                final content = contentController.text;
+        body: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // 제목 입력
+              TextField(
+                controller: titleController,
+                decoration: InputDecoration(
+                  labelText: '제목',
+                  labelStyle: TextStyle(color: Colors.pink[300]), // 라벨 색상 핑크로 설정
+                  filled: true,
+                  fillColor: Colors.pink[50], // 배경 색상 연한 핑크
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0), // 둥근 모서리
+                    borderSide: BorderSide(color: Colors.pink[300]!, width: 2), // 테두리 색상 및 두께
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                    borderSide: BorderSide(color: Colors.pink[300]!, width: 2), // 포커스 시 테두리 색상
+                  ),
+                ),
+              ),
+              SizedBox(height: 16), // 여백 추가
 
-                if (title.isEmpty) {
-                  PostProvider.showErrorDialog(context, '제목을 입력해주세요.');
-                  return;
-                }
-                if (author.isEmpty) {
-                  PostProvider.showErrorDialog(context, '작성자를 입력해주세요.');
-                  return;
-                }
-                if (content.isEmpty) {
-                  PostProvider.showErrorDialog(context, '내용을 입력해주세요.');
-                  return;
-                }
-                {
+              // 작성자 입력
+              TextField(
+                controller: authorController,
+                decoration: InputDecoration(
+                  labelText: '작성자',
+                  labelStyle: TextStyle(color: Colors.pink[300]),
+                  filled: true,
+                  fillColor: Colors.pink[50],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                    borderSide: BorderSide(color: Colors.pink[300]!, width: 2),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                    borderSide: BorderSide(color: Colors.pink[300]!, width: 2),
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+
+              // 내용 입력
+              TextField(
+                controller: contentController,
+                decoration: InputDecoration(
+                  labelText: '내용',
+                  labelStyle: TextStyle(color: Colors.pink[300]),
+                  filled: true,
+                  fillColor: Colors.pink[50],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                    borderSide: BorderSide(color: Colors.pink[300]!, width: 2),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                    borderSide: BorderSide(color: Colors.pink[300]!, width: 2),
+                  ),
+                ),
+                maxLines: 10,
+              ),
+              SizedBox(height: 20),
+
+              // 게시글 작성 버튼
+              ElevatedButton(
+                onPressed: () {
+                  final title = titleController.text;
+                  final author = authorController.text;
+                  final content = contentController.text;
+
+                  if (title.isEmpty) {
+                    PostProvider.showErrorDialog(context, '제목을 입력해주세요.');
+                    return;
+                  }
+                  if (author.isEmpty) {
+                    PostProvider.showErrorDialog(context, '작성자를 입력해주세요.');
+                    return;
+                  }
+                  if (content.isEmpty) {
+                    PostProvider.showErrorDialog(context, '내용을 입력해주세요.');
+                    return;
+                  }
+
                   final date = DateTime.now().toString().substring(5, 10);
-                  final view = 100;
+                  final view = 0;
 
                   if (widget.isEditing && widget.postIndex != null) {
                     // 게시물 수정
-                    context
-                        .read<PostProvider>()
-                        .updatePost(widget.postIndex!, title, author, content);
+                    context.read<PostProvider>().updatePost(widget.postIndex!, title, author, content);
                   } else {
                     // 새 게시물 작성
-                    context
-                        .read<PostProvider>()
-                        .addPost(title, author, date, view, content);
+                    context.read<PostProvider>().addPost(title, author, date, view, content);
                   }
                   Navigator.pop(context);
-                }
-              },
-              child: Text(widget.isEditing ? '게시글 수정' : '게시글 작성'),
-            ),
-          ],
-        ),
-      ),
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.pink[300], // 버튼 색상을 핑크로 설정
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30.0), // 둥근 모서리 설정
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 32.0), // 패딩 추가
+                  textStyle: TextStyle(
+                    fontSize: 16, // 글자 크기
+                    fontWeight: FontWeight.bold, // 글자 두께
+                  ),
+                  foregroundColor: Colors.white, // 글자 색상을 흰색으로 설정
+                ),
+                child: Text(widget.isEditing ? '게시글 수정' : '게시글 작성'),
+              ),
+            ],
+          ),
+        )
     );
   }
 }
@@ -456,7 +541,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-          title: Text(widget.post['title']), backgroundColor: Colors.lightBlue),
+          title: Text(widget.post['title']),
+          backgroundColor: Colors.pink[100]!),
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: Column(
@@ -644,7 +730,17 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 Expanded(
                   child: TextField(
                     controller: commentAuthorController,
-                    decoration: InputDecoration(labelText: '작성자'),
+                    decoration: InputDecoration(
+                      labelText: '작성자',
+                      labelStyle: TextStyle(color: Colors.pink[300]), // 라벨 색상 핑크
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.pink[300]!), // 포커스 시 하단 선 색상 핑크
+                      ),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.pink[200]!), // 기본 하단 선 색상 핑크
+                      ),
+                    ),
+                    style: TextStyle(color: Colors.black87), // 텍스트 색상
                     onTap: () {
                       if (commentAuthorController.text == "익명") {
                         setState(() {
@@ -659,7 +755,17 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   flex: 4, // 댓글 작성 버튼에 더 많은 공간을 할당
                   child: TextField(
                     controller: commentController,
-                    decoration: InputDecoration(labelText: '댓글 작성'),
+                    decoration: InputDecoration(
+                      labelText: '댓글 작성',
+                      labelStyle: TextStyle(color: Colors.pink[300]), // 라벨 색상 핑크
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.pink[300]!), // 포커스 시 하단 선 색상 핑크
+                      ),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.pink[200]!), // 기본 하단 선 색상 핑크
+                      ),
+                    ),
+                    style: TextStyle(color: Colors.black87), // 텍스트 색상
                     onSubmitted: (value) {
                       if (value.isNotEmpty) {
                         context.read<PostProvider>().addComment(
@@ -672,6 +778,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     },
                   ),
                 ),
+
                 SizedBox(width: 10), // 텍스트 필드와 버튼 사이 간격
                 ElevatedButton(
                   onPressed: () {
@@ -693,6 +800,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       setState(() {});
                     }
                   },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.pinkAccent, // 버튼 배경색을 핑크로 설정
+                    foregroundColor: Colors.white, // 버튼 텍스트 색상 설정
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20), // 버튼의 모서리 둥글게 설정
+                    ),
+                  ),
                   child: Text('댓글 작성'),
                 ),
               ],
