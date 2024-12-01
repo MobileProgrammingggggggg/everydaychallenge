@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore 추가
 import 'Error_screen.dart';
+import 'Main_test.dart';
 
 class SignUpScreen extends StatelessWidget {
   final TextEditingController _emailController = TextEditingController();
@@ -15,6 +16,70 @@ class SignUpScreen extends StatelessWidget {
       builder: (BuildContext context) {
         return ErrorDialog(message: message);
       },
+    );
+  }
+
+  void _showSuccessDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: Colors.black, width: 3),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Center(
+              child: Image.asset(
+                'assets/images/good.png',
+                height: 100,
+              ),
+            ),
+            SizedBox(height: 16),
+            Center(
+              child: Text(
+                "회원가입이 완료되었습니다.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          Center(
+            child: SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                style: TextButton.styleFrom(
+                  backgroundColor: Color.fromRGBO(92, 103, 227, 1),
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop(); // 다이얼로그 닫기
+                  // 로그인 화면으로 이동
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => MyApp()),
+                  );
+                },
+                child: Text(
+                  '확인',
+                  style: TextStyle(
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -66,8 +131,7 @@ class SignUpScreen extends StatelessWidget {
       });
 
       print('회원가입 성공: ${credential.user?.email}');
-      _showErrorDialog(context, '회원가입 성공! 로그인 화면으로 이동하세요.');
-      Navigator.pop(context); // 로그인 화면으로 이동
+      _showSuccessDialog(context);
     } on FirebaseAuthException catch (e) {
       print('Firebase Auth Error: ${e.code}'); // 에러 코드 출력
       if (e.code == 'email-already-in-use') {
