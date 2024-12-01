@@ -238,15 +238,15 @@ class _RouletteState extends State<Roulette>
 
       if (snapshot.exists) {
         final data = snapshot.data();
-        final skipTickets = data?['챌린지 스킵권'] ?? 0; // 챌린지 스킵권 확인
+        final changeTickets = data?['룰렛판 바꾸기'] ?? 0; // 룰렛판 바꾸기 티켓 확인
 
-        if (skipTickets > 0) {
-          // 스킵권이 충분하면 진행
+        if (changeTickets > 0) {
+          // 룰렛판 바꾸기 충분하면 진행
           await userDoc.update({
-            '챌린지 스킵권': skipTickets - 1, // 스킵권 차감
+            '룰렛판 바꾸기': changeTickets - 1, // 스킵권 차감
           });
 
-          print("챌린지 스킵권 1개 소모. 남은 스킵권: ${skipTickets - 1}");
+          print("룰렛판 바꾸기 1개 소모. 남은 개수: ${changeTickets - 1}");
 
           // 1. 기존에 저장된 데이터는 무시하고 랜덤으로 새로운 5개 문서 번호를 저장
           await _saveRandomChallengeDocuments(userUid, true);
