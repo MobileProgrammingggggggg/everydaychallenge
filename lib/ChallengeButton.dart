@@ -188,7 +188,7 @@ class _ChallengeButtonState extends State<ChallengeButton> {
           else // flag가 3 또는 4일 때 성공 또는 실패 메시지 표시
             Text(
               flag == 3 ? "성공~!" : "실패ㅠ", // 조건에 따라 메시지 변경
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
             ),
         ],
       ),

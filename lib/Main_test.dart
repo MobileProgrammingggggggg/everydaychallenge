@@ -340,7 +340,7 @@ class _CountdownTextState extends State<CountdownText> {
           style: TextStyle(
             fontFamily: "DoHyeon",
             color: Colors.blue, // AppColors.textBlue로 대체 가능
-            fontSize: 32,
+            fontSize: 25,
           ),
         ),
         // 시간, 분, 초 부분 (우측 정렬)
@@ -349,7 +349,7 @@ class _CountdownTextState extends State<CountdownText> {
           style: TextStyle(
             fontFamily: "DoHyeon",
             color: Colors.pink[200]!,
-            fontSize: 28,
+            fontSize: 25,
           ),
         ),
         // 알림 개수 표시 (NotificationIcon 위젯에서 표시)
@@ -493,7 +493,7 @@ class _QuoteWidgetState extends State<QuoteWidget> {
                     }(),
                     style: TextStyle(
                       fontFamily: "Diphylleia",
-                      fontSize: 16,
+                      fontSize: 14,
                       // 기본 글자 크기
                       fontWeight: FontWeight.bold,
                       fontStyle: FontStyle.italic,
@@ -516,7 +516,7 @@ class _QuoteWidgetState extends State<QuoteWidget> {
                   }(),
                   style: TextStyle(
                     fontFamily: "Diphylleia",
-                    fontSize: 14,
+                    fontSize: 12,
                     fontWeight: FontWeight.normal,
                     fontStyle: FontStyle.italic,
                     color: Colors.black54,
@@ -576,18 +576,15 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
   void dateUpdateChallenge(BuildContext context) async {
     User? currentUser = FirebaseAuth.instance.currentUser;
 
-
     if (currentUser != null) {
       String userId = currentUser.uid;
 
-
       // Firestore에서 사용자 데이터 가져오기
       DocumentSnapshot userDoc =
-      await _firestore.collection('users').doc(userId).get();
+          await _firestore.collection('users').doc(userId).get();
 
       if (userDoc.exists) {
-        Map<String, dynamic> userData =
-        userDoc.data() as Map<String, dynamic>;
+        Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
 
         // Firestore에서 가져온 날짜
         String? challengeDate = userData['challengeDate'];
@@ -597,14 +594,13 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
         String formattedDate =
             "${currentDate.year}-${currentDate.month}-${currentDate.day}";
 
-
         if (challengeDate != formattedDate) {
           // 날짜가 변경되었으면 flag를 1로 설정
           await _firestore.collection('users').doc(userId).update({
             'challengeFlag': 1,
             'challengeDate': formattedDate, // 날짜를 업데이트
             'challengeSelected': false,
-            'selectedChallenge' : "오늘의 챌린지는? ",
+            'selectedChallenge': "오늘의 챌린지는? ",
           });
 
           print("Date updated and flag set to 1");
@@ -613,7 +609,6 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
       }
     }
   }
-
 
   // 챌린지 업데이트 및 Firestore에 저장하는 메서드
   void updateChallenge(String challenge) async {
@@ -781,7 +776,7 @@ class ChallengePrompt extends StatelessWidget {
             style: TextStyle(
               color: AppColors.textBlue, // 제목 부분 색상
               fontFamily: 'DoHyeon',
-              fontSize: 36,
+              fontSize: 25,
               // fontWeight: FontWeight.bold,
             ),
           ),
@@ -791,7 +786,7 @@ class ChallengePrompt extends StatelessWidget {
             style: TextStyle(
               color: Colors.pink[200]!, // 챌린지 부분 색상
               fontFamily: 'DoHyeon',
-              fontSize: 36,
+              fontSize: 25,
             ),
           ),
         ],
@@ -803,7 +798,8 @@ class ChallengePrompt extends StatelessWidget {
 void addSignupDateIfMissing() async {
   final user = FirebaseAuth.instance.currentUser;
   if (user != null) {
-    final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final userDoc =
+        FirebaseFirestore.instance.collection('users').doc(user.uid);
     final docSnapshot = await userDoc.get();
 
     if (docSnapshot.exists) {
@@ -823,7 +819,8 @@ void addSignupDateIfMissing() async {
 
 void signUpUser(String email, String password) async {
   try {
-    UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+    UserCredential userCredential =
+        await FirebaseAuth.instance.createUserWithEmailAndPassword(
       email: email,
       password: password,
     );
@@ -831,7 +828,8 @@ void signUpUser(String email, String password) async {
     // 회원가입 성공 후 Firestore에 사용자 정보 저장
     final user = userCredential.user;
     if (user != null) {
-      final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
+      final userDoc =
+          FirebaseFirestore.instance.collection('users').doc(user.uid);
 
       // Firestore에 signupDate 설정
       await userDoc.set({
@@ -851,7 +849,8 @@ void signUpUser(String email, String password) async {
 void saveSignupDate() async {
   final user = FirebaseAuth.instance.currentUser;
   if (user != null) {
-    final userDocRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final userDocRef =
+        FirebaseFirestore.instance.collection('users').doc(user.uid);
     final userDoc = await userDocRef.get();
 
     if (userDoc.exists && userDoc.data()?['signupDate'] != null) {
@@ -869,10 +868,12 @@ void saveSignupDate() async {
     }
   }
 }
+
 void updateDday() async {
   final user = FirebaseAuth.instance.currentUser;
   if (user != null) {
-    final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final userDoc =
+        FirebaseFirestore.instance.collection('users').doc(user.uid);
 
     final docSnapshot = await userDoc.get();
     if (docSnapshot.exists) {
@@ -883,16 +884,19 @@ void updateDday() async {
       if (data['signupDate'] == null) {
         signupDate = user.metadata.creationTime!;
         await userDoc.update({
-          'signupDate': Timestamp.fromDate(signupDate), // Firestore에 signupDate 저장
+          'signupDate': Timestamp.fromDate(signupDate),
+          // Firestore에 signupDate 저장
         });
-        print('Signup date set from Authentication metadata for user: ${user.uid}');
+        print(
+            'Signup date set from Authentication metadata for user: ${user.uid}');
       } else {
         signupDate = (data['signupDate'] as Timestamp).toDate();
       }
 
       // 오늘 날짜를 UTC 기준으로 시간 제외하고 계산
       DateTime today = DateTime.now().toUtc();
-      DateTime signupDateOnly = DateTime.utc(signupDate.year, signupDate.month, signupDate.day);
+      DateTime signupDateOnly =
+          DateTime.utc(signupDate.year, signupDate.month, signupDate.day);
       DateTime todayOnly = DateTime.utc(today.year, today.month, today.day);
 
       int daysSinceSignup = todayOnly.difference(signupDateOnly).inDays;
@@ -921,6 +925,7 @@ class _HeaderSectionState extends State<HeaderSection> {
   String uid = FirebaseAuth.instance.currentUser!.uid;
   int points = 0;
   int dDay = 0;
+  String UID = "";
 
   @override
   void initState() {
@@ -932,11 +937,12 @@ class _HeaderSectionState extends State<HeaderSection> {
 
   getUserInfo() async {
     var result =
-    await FirebaseFirestore.instance.collection('users').doc(uid).get();
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
     if (result.exists) {
       setState(() {
         points = result.data()?['points'] ?? 0; // 'points' 필드에서 포인트 값을 가져옴
         dDay = result.data()?['dDay'] ?? 1; // 'dDay' 필드에서 D-day 값을 가져옴
+        UID = result.data()?['id'] ?? "Unknown"; // 'dDay' 필드에서 id 값을 가져옴
       });
     }
   }
@@ -967,28 +973,32 @@ class _HeaderSectionState extends State<HeaderSection> {
                 " $points P", // 데이터베이스에서 가져온 포인트 출력
                 style: TextStyle(
                   fontFamily: "DoHyeon",
-                  fontSize: 20,
+                  fontSize: 18,
                   color: Colors.black,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-          Row(
+          Column(
+            // Column 위젯으로 변경
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                "날짜 : D + $dDay  ", // Firestore에서 가져온 D-day 출력
+                "$UID님과 함께한 시간 $dDay일째!", // Firestore에서 가져온 D-day 출력
                 style: TextStyle(
-                    fontFamily: "DoHyeon",
-                    color: AppColors.textBlue,
-                    fontSize: 24),
+                  fontFamily: "DoHyeon",
+                  color: Colors.pink[200]!,
+                  fontSize: 18,
+                ),
               ),
               Text(
                 "달성률: 98%",
                 style: TextStyle(
-                    fontFamily: "DoHyeon",
-                    color: AppColors.textBlue,
-                    fontSize: 24),
+                  fontFamily: "DoHyeon",
+                  color: AppColors.textBlue,
+                  fontSize: 18,
+                ),
               ),
             ],
           ),
