@@ -353,13 +353,6 @@ class _StoreScreenState extends State<StoreScreen> {
                       description: "하루의 기록을 삭제할 수 있습니다.",
                       onTap: () => _showPurchaseDialog(context, "기록 삭제권", 30),
                     ),
-                    ShopItem(
-                      icon: Icons.auto_fix_high,
-                      title: "난이도 선택권",
-                      points: 20,
-                      description: "챌린지의 난이도를 선택할 수 있습니다.",
-                      onTap: () => _showPurchaseDialog(context, "난이도 선택권", 20),
-                    ),
                   ],
                 ),
               ),
