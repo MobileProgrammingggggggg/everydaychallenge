@@ -916,6 +916,7 @@ void updateDday() async {
   }
 }
 
+
 class HeaderSection extends StatefulWidget {
   @override
   _HeaderSectionState createState() => _HeaderSectionState();
@@ -929,26 +930,42 @@ class _HeaderSectionState extends State<HeaderSection> {
   int score = 0;
   int percent = 0;
 
+  late StreamSubscription<DocumentSnapshot> userInfoSubscription;
+
   @override
   void initState() {
     super.initState();
     saveSignupDate(); // 화면이 생성될 때 가입 날짜 저장 (기존 사용자를 위한 처리)
     updateDday(); // 화면이 생성될 때 D-day 업데이트
-    getUserInfo();
+    listenToUserInfo(); // Firestore 실시간 업데이트 리스너 추가
   }
 
-  getUserInfo() async {
-    var result =
-        await FirebaseFirestore.instance.collection('users').doc(uid).get();
-    if (result.exists) {
-      setState(() {
-        points = result.data()?['points'] ?? 0; // 'points' 필드에서 포인트 값을 가져옴
-        dDay = result.data()?['dDay'] ?? 1; // 'dDay' 필드에서 D-day 값을 가져옴
-        UID = result.data()?['id'] ?? "Unknown"; // 'id' 필드에서 id 값을 가져옴
-        score = result.data()?['score'] ?? 0; // 'score' 필드에서 'score' 값을 가져옴
-        percent = (score / dDay * 100).toInt();
-      });
-    }
+  // Firestore 실시간 리스너를 사용하여 사용자 정보 가져오기
+  void listenToUserInfo() {
+    userInfoSubscription = FirebaseFirestore.instance.collection('users').doc(uid).snapshots().listen((snapshot) {
+      if (snapshot.exists) {
+        setState(() {
+          points = snapshot.data()?['points'] ?? 0; // 'points' 필드에서 포인트 값을 가져옴
+          dDay = snapshot.data()?['dDay'] ?? 1; // 'dDay' 필드에서 D-day 값을 가져옴
+          UID = snapshot.data()?['id'] ?? "Unknown"; // 'id' 필드에서 id 값을 가져옴
+          score = snapshot.data()?['score'] ?? 0; // 'score' 필드에서 'score' 값을 가져옴
+          percent = (score / dDay * 100).toInt();
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    userInfoSubscription.cancel(); // 리스너 해제하여 메모리 누수 방지
+    super.dispose();
+  }
+
+  // 포인트 추가 함수
+  void addPoints(int addedPoints) async {
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      'points': FieldValue.increment(addedPoints),
+    });
   }
 
   @override
