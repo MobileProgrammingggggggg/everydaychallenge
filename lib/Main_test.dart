@@ -17,17 +17,59 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:math';
 import 'dart:async';
 import 'package:intl/intl.dart';
-
+import 'package:workmanager/workmanager.dart';
 // import 'Community_Provider.dart';
 
 // 메인 화면
-Future<void> main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options:
-    DefaultFirebaseOptions.currentPlatform, // 웹에서 FirebaseOptions을 가져옵니다.
+  await Firebase.initializeApp();
+
+  // WorkManager 초기화
+  Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+
+  // 매일 자정에 실행될 작업 예약
+  Workmanager().registerPeriodicTask(
+    "dailyDdayUpdate", // 태스크 ID
+    "dailyDdayUpdateTask", // 태스크 이름
+    frequency: Duration(hours: 24), // 24시간마다 실행
   );
+
   runApp(MyApp());
+}
+
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    await Firebase.initializeApp(); // Firebase 초기화
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
+      final docSnapshot = await userDoc.get();
+
+      if (docSnapshot.exists) {
+        final data = docSnapshot.data()!;
+        if (data['signupDate'] != null) {
+          DateTime signupDate = (data['signupDate'] as Timestamp).toDate();
+          DateTime today = DateTime.now();
+          DateTime signupDateOnly = DateTime(signupDate.year, signupDate.month, signupDate.day);
+          DateTime todayOnly = DateTime(today.year, today.month, today.day);
+
+          int daysSinceSignup = todayOnly.difference(signupDateOnly).inDays;
+
+          // Firestore 업데이트
+          await userDoc.update({
+            'dDay': daysSinceSignup + 1,
+            'lastUpdated': Timestamp.fromDate(todayOnly),
+          });
+
+          print('D-day updated to: ${daysSinceSignup + 1}');
+        }
+      }
+    }
+
+    return Future.value(true);
+  });
 }
 
 class MyApp extends StatelessWidget {
@@ -36,9 +78,11 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false, // 디버그 버튼 가리기
       home: AuthenticationWrapper(),
+
     );
   }
 }
+
 
 class AuthenticationWrapper extends StatelessWidget {
   @override
@@ -777,7 +821,6 @@ class ChallengePrompt extends StatelessWidget {
               color: AppColors.textBlue, // 제목 부분 색상
               fontFamily: 'DoHyeon',
               fontSize: 25,
-              // fontWeight: FontWeight.bold,
             ),
           ),
           // 실제 챌린지 부분
@@ -799,7 +842,7 @@ void addSignupDateIfMissing() async {
   final user = FirebaseAuth.instance.currentUser;
   if (user != null) {
     final userDoc =
-        FirebaseFirestore.instance.collection('users').doc(user.uid);
+    FirebaseFirestore.instance.collection('users').doc(user.uid);
     final docSnapshot = await userDoc.get();
 
     if (docSnapshot.exists) {
@@ -820,7 +863,7 @@ void addSignupDateIfMissing() async {
 void signUpUser(String email, String password) async {
   try {
     UserCredential userCredential =
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
+    await FirebaseAuth.instance.createUserWithEmailAndPassword(
       email: email,
       password: password,
     );
@@ -829,7 +872,7 @@ void signUpUser(String email, String password) async {
     final user = userCredential.user;
     if (user != null) {
       final userDoc =
-          FirebaseFirestore.instance.collection('users').doc(user.uid);
+      FirebaseFirestore.instance.collection('users').doc(user.uid);
 
       // Firestore에 signupDate 설정
       await userDoc.set({
@@ -850,7 +893,7 @@ void saveSignupDate() async {
   final user = FirebaseAuth.instance.currentUser;
   if (user != null) {
     final userDocRef =
-        FirebaseFirestore.instance.collection('users').doc(user.uid);
+    FirebaseFirestore.instance.collection('users').doc(user.uid);
     final userDoc = await userDocRef.get();
 
     if (userDoc.exists && userDoc.data()?['signupDate'] != null) {
@@ -873,7 +916,7 @@ void updateDday() async {
   final user = FirebaseAuth.instance.currentUser;
   if (user != null) {
     final userDoc =
-        FirebaseFirestore.instance.collection('users').doc(user.uid);
+    FirebaseFirestore.instance.collection('users').doc(user.uid);
 
     final docSnapshot = await userDoc.get();
     if (docSnapshot.exists) {
@@ -894,10 +937,10 @@ void updateDday() async {
       }
 
       // 오늘 날짜를 UTC 기준으로 시간 제외하고 계산
-      DateTime today = DateTime.now().toUtc();
+      DateTime today = DateTime.now();
       DateTime signupDateOnly =
-          DateTime.utc(signupDate.year, signupDate.month, signupDate.day);
-      DateTime todayOnly = DateTime.utc(today.year, today.month, today.day);
+      DateTime(signupDate.year, signupDate.month, signupDate.day);
+      DateTime todayOnly = DateTime(today.year, today.month, today.day);
 
       int daysSinceSignup = todayOnly.difference(signupDateOnly).inDays;
 
@@ -916,7 +959,6 @@ void updateDday() async {
   }
 }
 
-
 class HeaderSection extends StatefulWidget {
   @override
   _HeaderSectionState createState() => _HeaderSectionState();
@@ -931,6 +973,7 @@ class _HeaderSectionState extends State<HeaderSection> {
   int percent = 0;
 
   late StreamSubscription<DocumentSnapshot> userInfoSubscription;
+  Timer? dailyUpdateTimer;
 
   @override
   void initState() {
@@ -938,6 +981,7 @@ class _HeaderSectionState extends State<HeaderSection> {
     saveSignupDate(); // 화면이 생성될 때 가입 날짜 저장 (기존 사용자를 위한 처리)
     updateDday(); // 화면이 생성될 때 D-day 업데이트
     listenToUserInfo(); // Firestore 실시간 업데이트 리스너 추가
+    scheduleDailyUpdate(); // 자정에 D-day 업데이트
   }
 
   // Firestore 실시간 리스너를 사용하여 사용자 정보 가져오기
@@ -955,9 +999,22 @@ class _HeaderSectionState extends State<HeaderSection> {
     });
   }
 
+  // 자정에 D-day 업데이트를 예약하는 함수
+  void scheduleDailyUpdate() {
+    final now = DateTime.now();
+    final nextMidnight = DateTime(now.year, now.month, now.day + 1);
+    final durationUntilMidnight = nextMidnight.difference(now);
+
+    dailyUpdateTimer = Timer(durationUntilMidnight, () {
+      updateDday(); // 자정에 D-day 업데이트
+      scheduleDailyUpdate(); // 다음 자정 업데이트 예약
+    });
+  }
+
   @override
   void dispose() {
     userInfoSubscription.cancel(); // 리스너 해제하여 메모리 누수 방지
+    dailyUpdateTimer?.cancel(); // 타이머 해제
     super.dispose();
   }
 
@@ -1002,7 +1059,6 @@ class _HeaderSectionState extends State<HeaderSection> {
             ],
           ),
           Column(
-            // Column 위젯으로 변경
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
