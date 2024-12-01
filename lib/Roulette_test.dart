@@ -65,7 +65,7 @@ class _RouletteState extends State<Roulette>
     try {
       // Firestore에서 challengelist 컬렉션의 문서 이름들 가져오기
       final challengelistSnapshot =
-          await _firestore.collection('challengelist').get();
+      await _firestore.collection('challengelist').get();
 
       if (challengelistSnapshot.docs.isEmpty) {
         print("challengelist 컬렉션에 문서가 없습니다.");
@@ -74,12 +74,12 @@ class _RouletteState extends State<Roulette>
 
       // 문서들의 ID를 리스트로 저장
       final documentNames =
-          challengelistSnapshot.docs.map((doc) => doc.id).toList();
+      challengelistSnapshot.docs.map((doc) => doc.id).toList();
 
       // 5개의 랜덤 문서 번호 선택
       while (randomDocuments.length < 5) {
         final randomDocument =
-            documentNames[random.nextInt(documentNames.length)];
+        documentNames[random.nextInt(documentNames.length)];
         if (!randomDocuments.contains(randomDocument)) {
           randomDocuments.add(randomDocument);
         }
@@ -146,7 +146,7 @@ class _RouletteState extends State<Roulette>
 
       if (userDoc.exists) {
         final documentNames =
-            List<String>.from(userDoc['selected_challenges'] ?? []);
+        List<String>.from(userDoc['selected_challenges'] ?? []);
         if (documentNames.isNotEmpty) {
           _fetchItemsFromSelectedDocuments(documentNames);
         } else {
@@ -424,67 +424,67 @@ class _RouletteState extends State<Roulette>
         child: Center(
           child: _isLoading
               ? SizedBox(
-                  width: 200, // 원하는 너비
-                  height: 200, // 원하는 높이
-                  child: CircularProgressIndicator(
-                    strokeWidth: 40, // 로딩바의 두께 조정
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(Colors.pink[100]!),
-                    // 로딩바 색상 변경
-                    backgroundColor: Colors.grey[200], // 배경 색상 설정
-                  ),
-                ) // 로딩 중 표시
+            width: 200, // 원하는 너비
+            height: 200, // 원하는 높이
+            child: CircularProgressIndicator(
+              strokeWidth: 40, // 로딩바의 두께 조정
+              valueColor:
+              AlwaysStoppedAnimation<Color>(Colors.pink[100]!),
+              // 로딩바 색상 변경
+              backgroundColor: Colors.grey[200], // 배경 색상 설정
+            ),
+          ) // 로딩 중 표시
               : Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Stack(
-                      alignment: Alignment.topCenter,
-                      children: [
-                        Transform.rotate(
-                          angle: _rotation,
-                          // 룰렛 크기 조정
-                          child: CustomPaint(
-                            size: Size(400, 400),
-                            painter: RoulettePainter(items, colors),
-                          ),
-                        ),
-                        Positioned(
-                          top: 0,
-                          child: CustomPaint(
-                            size: Size(30, 20),
-                            painter: TrianglePainter(),
-                          ),
-                        ),
-                      ],
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Stack(
+                alignment: Alignment.topCenter,
+                children: [
+                  Transform.rotate(
+                    angle: _rotation,
+                    // 룰렛 크기 조정
+                    child: CustomPaint(
+                      size: Size(400, 400),
+                      painter: RoulettePainter(items, colors),
                     ),
-                    SizedBox(height: 20),
+                  ),
+                  Positioned(
+                    top: 0,
+                    child: CustomPaint(
+                      size: Size(30, 20),
+                      painter: TrianglePainter(),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
 
-                    // 그냥 돌리기
-                    ElevatedButton(
-                      onPressed: _isSpinning ? null : startSpin,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.pink[100], // 버튼 배경색
-                        disabledBackgroundColor: Colors.pink[50], // 비활성화 상태 배경색
-                        foregroundColor: Colors.white, // 텍스트 색상
-                        disabledForegroundColor: Colors.grey, // 비활성화 상태 텍스트 색상
-                      ),
-                      child: Text("돌려돌려 돌림판"),
-                    ),
-                    SizedBox(height: 10),
-
-                    // 리스트 새로 고침 버튼
-                    ElevatedButton(
-                      onPressed: _isLoading ? null : refreshList,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.pink[100], // 버튼 배경색
-                        disabledBackgroundColor: Colors.pink[50], // 비활성화 상태 배경색
-                        foregroundColor: Colors.white, // 텍스트 색상
-                        disabledForegroundColor: Colors.grey, // 비활성화 상태 텍스트 색상
-                      ),
-                      child: Text("마법의 아이템으로 목록을 새로 가져올게"),
-                    ),
-                  ],
+              // 그냥 돌리기
+              ElevatedButton(
+                onPressed: _isSpinning ? null : startSpin,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.pink[100], // 버튼 배경색
+                  disabledBackgroundColor: Colors.pink[50], // 비활성화 상태 배경색
+                  foregroundColor: Colors.white, // 텍스트 색상
+                  disabledForegroundColor: Colors.grey, // 비활성화 상태 텍스트 색상
                 ),
+                child: Text("돌려돌려 돌림판"),
+              ),
+              SizedBox(height: 10),
+
+              // 리스트 새로 고침 버튼
+              ElevatedButton(
+                onPressed: _isLoading ? null : refreshList,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.pink[100], // 버튼 배경색
+                  disabledBackgroundColor: Colors.pink[50], // 비활성화 상태 배경색
+                  foregroundColor: Colors.white, // 텍스트 색상
+                  disabledForegroundColor: Colors.grey, // 비활성화 상태 텍스트 색상
+                ),
+                child: Text("마법의 아이템으로 목록을 새로 가져올게"),
+              ),
+            ],
+          ),
         ),
       ),
     );
