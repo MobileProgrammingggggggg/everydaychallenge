@@ -926,6 +926,8 @@ class _HeaderSectionState extends State<HeaderSection> {
   int points = 0;
   int dDay = 0;
   String UID = "";
+  int score = 0;
+  int percent = 0;
 
   @override
   void initState() {
@@ -942,7 +944,9 @@ class _HeaderSectionState extends State<HeaderSection> {
       setState(() {
         points = result.data()?['points'] ?? 0; // 'points' 필드에서 포인트 값을 가져옴
         dDay = result.data()?['dDay'] ?? 1; // 'dDay' 필드에서 D-day 값을 가져옴
-        UID = result.data()?['id'] ?? "Unknown"; // 'dDay' 필드에서 id 값을 가져옴
+        UID = result.data()?['id'] ?? "Unknown"; // 'id' 필드에서 id 값을 가져옴
+        score = result.data()?['score'] ?? 0; // 'score' 필드에서 'score' 값을 가져옴
+        percent = (score / dDay * 100).toInt();
       });
     }
   }
@@ -993,7 +997,7 @@ class _HeaderSectionState extends State<HeaderSection> {
                 ),
               ),
               Text(
-                "달성률: 98%",
+                "달성률: $percent%",
                 style: TextStyle(
                   fontFamily: "DoHyeon",
                   color: AppColors.textBlue,
