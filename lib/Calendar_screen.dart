@@ -71,29 +71,55 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   void _fetchCompletedChallenges() async {
-    // Firestore에서 데이터 읽기
-    DocumentSnapshot snapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .get();
+    try {
+      // Firestore에서 데이터 읽기
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
 
-    if (snapshot.exists) {
-      Map<String, dynamic> data = snapshot.data() as Map<String, dynamic>;
+      if (snapshot.exists) {
+        Map<String, dynamic> data = snapshot.data() as Map<String, dynamic>;
 
-      // Firestore에서 완료된 날짜 목록과 챌린지 정보를 읽어옴
-      List<dynamic> completedDaysList = data['completedDays'] ?? [];
-      Map<String, dynamic> completedChallengesMap = data['completedChallenges'] ?? {};
+        // Firestore에서 완료된 날짜 목록과 챌린지 정보를 읽어옴
+        List<dynamic> completedDaysList = data['completedDays'] ?? [];
+        Map<String, dynamic> completedChallengesMap = data['completedChallenges'] ?? {};
 
-      setState(() {
-        // Firestore에서 받은 완료된 날짜들을 _completedDays와 _completedChallenges에 추가
-        for (String dateStr in completedDaysList) {
-          DateTime completedDay = DateTime.parse(dateStr);
-          _completedDays.add(completedDay);
-          _completedChallenges[completedDay] = completedChallengesMap[dateStr] ?? '';
-        }
-      });
+        // 디버깅 출력 추가
+        print('completedDaysList: $completedDaysList');
+        print('completedChallengesMap: $completedChallengesMap');
+
+        setState(() {
+          // Firestore에서 받은 완료된 날짜들을 _completedDays와 _completedChallenges에 추가
+          for (String dateStr in completedDaysList) {
+            try {
+              // 날짜 형식을 2자리로 맞추기 위해 'dateStr' 수정
+              List<String> dateParts = dateStr.split('-');
+              if (dateParts.length == 3) {
+                // 월과 일이 1자리일 경우 2자리로 맞추기
+                if (dateParts[1].length == 1) dateParts[1] = '0' + dateParts[1];
+                if (dateParts[2].length == 1) dateParts[2] = '0' + dateParts[2];
+
+                String correctedDateStr = '${dateParts[0]}-${dateParts[1]}-${dateParts[2]}';
+
+                // DateTime으로 변환
+                DateTime completedDay = DateTime.parse(correctedDateStr);
+                _completedDays.add(completedDay);
+                _completedChallenges[completedDay] = completedChallengesMap[dateStr] ?? '';
+              }
+            } catch (e) {
+              print('Error parsing date: $dateStr');
+            }
+          }
+        });
+      } else {
+        print('No data found for the user.');
+      }
+    } catch (e) {
+      print('Error fetching data: $e');
     }
   }
+
 
   void _listenToChallengeUpdates() {
     // Firestore의 `users` 컬렉션에서 데이터 읽기
