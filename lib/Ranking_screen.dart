@@ -101,6 +101,32 @@ class _RankingScreenState extends State<RankingScreen> {
         return scoreB.compareTo(scoreA); // 내림차순 정렬
       });
 
+    // Widget _buildRankingList() {
+    //   // `dDay`와 `score`의 곱을 기준으로 내림차순 정렬
+    //   final sortedUsers = List.from(users)
+    //     ..sort((a, b) {
+    //       final scoreA = a.get('score') != null
+    //           ? int.tryParse(a.get('score').toString()) ?? 0
+    //           : 0;
+    //
+    //       final dDayA = a.get('dDay') != null
+    //           ? int.tryParse(a.get('dDay').toString()) ?? 0
+    //           : 0;
+    //
+    //       final scoreB = b.get('score') != null
+    //           ? int.tryParse(b.get('score').toString()) ?? 0
+    //           : 0;
+    //
+    //       final dDayB = b.get('dDay') != null
+    //           ? int.tryParse(b.get('dDay').toString()) ?? 0
+    //           : 0;
+    //
+    //       final rankValueA = scoreA * dDayA;
+    //       final rankValueB = scoreB * dDayB;
+    //
+    //       return rankValueB.compareTo(rankValueA); // 내림차순 정렬
+    //     });
+
     return Column(
       children: [
         Container(
@@ -158,6 +184,11 @@ class _RankingScreenState extends State<RankingScreen> {
                 '${index + 4}',
                 user.get('id') ?? 'Unknown',
               );
+              // return _buildRankRow(
+              //   '${user.get('score')} x ${user.get('dDay')}', // 곱한 값 표시
+              //   '${index + 4}',
+              //   user.get('id') ?? 'Unknown',
+              // );
             },
           ),
         ),
