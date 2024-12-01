@@ -38,7 +38,7 @@ class _FailedState extends State<Failed> {
                   // 실패 이미지 추가
                   SizedBox(height: 200),
                   Image.asset(
-                    'assets/images/error.png', // 이미지 경로 (실패를 나타내는 이미지로 변경)
+                    'assets/images/failure.png', // 이미지 경로 (실패를 나타내는 이미지로 변경)
                     height: 150, // 이미지 높이 설정 (조정)
                   ),
                   SizedBox(height: 20), // 간격 조정

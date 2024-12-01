@@ -37,10 +37,10 @@ class _SucceedState extends State<Succeed> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // 축하 이미지 추가
-                  SizedBox(height: 200),
+                  SizedBox(height: 1),
                   Image.asset(
-                    'assets/images/error.png', // 이미지 경로
-                    height: 150, // 이미지 높이 설정 (조정)
+                    'assets/images/success.png', // 이미지 경로
+                    height: 350, // 이미지 높이 설정 (조정)
                   ),
                   SizedBox(height: 100),
                   // 성공 버튼 추가

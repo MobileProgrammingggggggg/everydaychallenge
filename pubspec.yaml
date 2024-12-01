@@ -85,6 +85,8 @@ flutter:
     - assets/images/right_good.png
     - assets/images/twerking.gif
     - assets/images/image7.png
+    - assets/images/success.png
+    - assets/images/failure.png
     - assets/.env
 
   fonts:
