@@ -1,37 +1,88 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'CustomBottomNavigationBar.dart';
+import 'package:intl/intl.dart';
 import 'Error_screen.dart';
 import 'Main_test.dart';
+import 'dart:math';
 import 'package:get/get.dart';
 // import 'Ask_again_screen.dart';
 // import 'package:test_flutter/themes/colors.dart';
 
 void main() {
   runApp(CommunityScreen());
-}
+} // Provider & 파이어베이스 연계
 
-// Provider 패키지로 메모리에 내용 저장
-// 추후 파이어베이스 연동으로 교체
 class PostProvider extends ChangeNotifier {
-  List<Map<String, dynamic>> _posts = [
-    for (int i = 1; i <= 50; i++)
-      {
-        'title': '$i번 게시물',
-        'author': '익명$i',
-        'date': '11-01',
-        'view': 0,
-        'content': '게시글 $i 내용',
-        'comments': <Map<String, String>>[]
+  // 글 문서 ID 생성 함수
+  String generatePostId() {
+    final now = DateTime.now();
+    final formattedTime =
+        DateFormat('yyyyMMddHHmm').format(now); // yyyyMMddHHmm 형식
+    const chars =
+        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final random = Random();
+    final randomString =
+        List.generate(4, (index) => chars[random.nextInt(chars.length)]).join();
+    return 'post$formattedTime$randomString';
+  }
+
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  List<Map<String, dynamic>> _posts = [];
+
+  Future<void> fetchPosts() async {
+    final firestore = FirebaseFirestore.instance;
+
+    try {
+      print("try 문 접근");
+      final snapshot = await firestore.collection('posts').get();
+      // 게시물이 없으면, _posts는 빈 리스트로 설정
+      if (snapshot.docs.isEmpty) {
+        _posts = [];
+        print("게시물이 없습니다.");
+      } else {
+        print("else 문 접근");
+        _posts = snapshot.docs.map((doc) {
+          return {
+            'title': doc['title'] ?? '',
+            'author': doc['author'] ?? '',
+            'date': doc['date'] ?? '',
+            'views': doc['views'] ?? 0,
+            'content': doc['content'] ?? '',
+            // comments 필드 안전하게 처리
+            'comments': (doc['comments'] as List<dynamic>?)?.map(
+                  (e) {
+                    if (e is Map) {
+                      return Map<String, String>.from(e as Map);
+                    } else {
+                      // 잘못된 데이터가 있을 경우 기본 값을 반환
+                      return {
+                        'commentAuthor': 'Unknown',
+                        'commentContent': e.toString(),
+                      };
+                    }
+                  },
+                ).toList() ??
+                <Map<String, String>>[],
+          };
+        }).toList();
+        notifyListeners();
+        print("게시물 데이터 불러오기 성공");
       }
-  ];
+    } catch (e) {
+      print("게시물 데이터 불러오기 실패: $e");
+    }
+  }
 
   // 마지막 게시물 제목 변경하고 알림
-  PostProvider() {
-    _posts[_posts.length - 1]['title'] = '뭘봐';
-    _posts[_posts.length - 1]['content'] = '메롱 어쩔티비 ㅋ';
-    notifyListeners();
-  }
+  // Future<void> updateLastPostTitle(String title, String content) async {
+  //   if (_posts.isNotEmpty) {
+  //     _posts[_posts.length - 1]['title'] = title;
+  //     _posts[_posts.length - 1]['content'] = content;
+  //     notifyListeners();
+  //   }
+  // }
 
   int _currentPage = 1;
   final int _postsPerPage = 8;
@@ -40,16 +91,24 @@ class PostProvider extends ChangeNotifier {
 
   // 외부에서 게시물에 접근할 수 있도록 posts 접근자 추가
   // 현재 페이지에 해당하는 게시물 목록 가져오기
+
+  // List<Map<String, dynamic>> get currentPosts {
+  //   int startIndex = (_currentPage - 1) * _postsPerPage;
+  //   int endIndex = startIndex + _postsPerPage;
+  //   return _posts.sublist(
+  //     startIndex,
+  //     endIndex > _posts.length ? _posts.length : endIndex,
+  //   );
+  // }
+
   List<Map<String, dynamic>> get currentPosts {
     int startIndex = (_currentPage - 1) * _postsPerPage;
-    int endIndex = startIndex + _postsPerPage;
-    return _posts.sublist(
-      startIndex,
-      endIndex > _posts.length ? _posts.length : endIndex,
-    );
+    int endIndex = (_currentPage * _postsPerPage).clamp(0, _posts.length);
+    return _posts.sublist(startIndex, endIndex);
   }
 
-  int get totalPages => (_posts.length / _postsPerPage).ceil();
+  int get totalPages =>
+      (_posts.isEmpty) ? 1 : (_posts.length / _postsPerPage).ceil();
   int get currentPage => _currentPage;
 
   // 페이지 변경
@@ -61,69 +120,132 @@ class PostProvider extends ChangeNotifier {
   }
 
   // 게시물 작성 추가
-  void addPost(
-      String title, String author, String date, int view, String content) {
-    _posts.insert(0, {
-      'title': title,
-      'author': author,
-      'date': date,
-      'view': view,
-      'content': content,
-      'comments': <Map<String, String>>[]
-    });
+  Future<void> addPost(String title, String author, String date, int views,
+      String content) async {
+    try {
+      // 사용자 정의 방식으로 ID 생성
+      String postId = generatePostId();
 
-    // 페이지를 1번으로 이동
-    _currentPage = 1;
-    notifyListeners();
+      // Firestore에 게시물 추가
+      await _firestore.collection('posts').doc(postId).set({
+        'title': title,
+        'author': author,
+        'date': date,
+        'views': views,
+        'content': content,
+        'comments': [], // 초기 댓글은 빈 리스트로 설정
+      });
+
+      // 로컬 리스트에도 게시물 추가
+      _posts.add({
+        'id': postId, // Firestore 문서 ID를 로컬에 추가
+        'title': title,
+        'author': author,
+        'date': date,
+        'views': views,
+        'content': content,
+        'comments': [],
+      });
+
+      notifyListeners();
+    } catch (e) {
+      print("Error adding post: $e");
+    }
   }
 
   // 게시물 삭제 메서드 추가
-  void deletePost(int postIndex) {
+  Future<void> deletePost(int postIndex) async {
     if (postIndex >= 0 && postIndex < _posts.length) {
-      _posts.removeAt(postIndex);
+      String postId = _posts[postIndex]['id']; // Firestore 문서 ID 가져오기
+      try {
+        // Firestore에서 해당 게시물 삭제
+        await _firestore.collection('posts').doc(postId).delete();
 
-      // 삭제 후 페이지 번호가 올바른지 확인
-      // 삭제로 인해 현재 페이지가 변경될 수 있으므로 currentPage를 다시 조정
-      int totalPages = (_posts.length / _postsPerPage).ceil();
-      if (_currentPage > totalPages) {
-        _currentPage = totalPages; // 페이지가 범위를 벗어나지 않게 설정
+        // 로컬 리스트에서도 삭제
+        _posts.removeAt(postIndex);
+
+        // 페이지 번호 재조정
+        int totalPages = (_posts.length / _postsPerPage).ceil();
+        if (_currentPage > totalPages) {
+          _currentPage = totalPages;
+        }
+
+        notifyListeners();
+      } catch (e) {
+        print("Error deleting post: $e");
       }
-
-      notifyListeners();
-      // 화면 갱신을 한 텀 늦추어 실행
-      // Future.delayed(Duration(milliseconds: 100), () {
-      //   notifyListeners();
-      // });
     }
   }
 
   // 게시물 수정 메서드 추가
-  void updatePost(int postIndex, String title, String author, String content) {
+  Future<void> updatePost(
+      int postIndex, String title, String author, String content) async {
     if (postIndex >= 0 && postIndex < _posts.length) {
-      _posts[postIndex]['title'] = title;
-      _posts[postIndex]['author'] = author; // 작성자 업데이트 추가
-      _posts[postIndex]['content'] = content;
-      notifyListeners();
+      String postId = _posts[postIndex]['id']; // Firestore 문서 ID 가져오기
+      try {
+        // Firestore에서 해당 게시물 업데이트
+        await _firestore.collection('posts').doc(postId).update({
+          'title': title,
+          'author': author,
+          'content': content,
+        });
+
+        // 로컬 게시물도 업데이트
+        _posts[postIndex]['title'] = title;
+        _posts[postIndex]['author'] = author;
+        _posts[postIndex]['content'] = content;
+
+        notifyListeners();
+      } catch (e) {
+        print("Error updating post: $e");
+      }
     }
   }
 
   // 새로운 댓글 추가
-  void addComment(int postIndex, Map<String, String> comment) {
-    _posts[postIndex]['comments'].add(comment);
-    notifyListeners();
+  Future<void> addComment(int postIndex, Map<String, String> comment) async {
+    String postId = _posts[postIndex]['id']; // Firestore 문서 ID 가져오기
+    try {
+      // Firestore에 댓글 추가
+      await _firestore.collection('posts').doc(postId).update({
+        'comments': FieldValue.arrayUnion([comment]),
+      });
+
+      // 로컬 리스트에도 댓글 추가
+      _posts[postIndex]['comments'].add(comment);
+      notifyListeners();
+    } catch (e) {
+      print("댓글 추가 오류: $e");
+    }
   }
 
   // 댓글 삭제 메서드 추가
-  void deleteComment(int postIndex, int commentIndex) {
-    _posts[postIndex]['comments'].removeAt(commentIndex);
-    notifyListeners();
+  Future<void> deleteComment(int postIndex, int commentIndex) async {
+    if (postIndex >= 0 && postIndex < _posts.length) {
+      String postId = _posts[postIndex]['id']; // Firestore 문서 ID 가져오기
+      Map<String, String> commentToDelete =
+          _posts[postIndex]['comments'][commentIndex];
+
+      try {
+        // Firestore에서 댓글 삭제
+        await _firestore.collection('posts').doc(postId).update({
+          'comments': FieldValue.arrayRemove([commentToDelete]),
+        });
+
+        // 로컬 리스트에서도 댓글 삭제
+        _posts[postIndex]['comments'].removeAt(commentIndex);
+        notifyListeners();
+      } catch (e) {
+        print("댓글 삭제 오류: $e");
+      }
+    }
   }
 
   // 조회 수 증가
   void incrementViews(int postIndex) {
     if (postIndex >= 0 && postIndex < _posts.length) {
       // 조회수를 String에서 int로 변환 후 증가
-      _posts[postIndex]['view'] = (_posts[postIndex]['view'] as int) + 1;
+      _posts[postIndex]['views'] = (_posts[postIndex]['views'] as int) + 1;
       notifyListeners();
     }
   }
@@ -147,136 +269,144 @@ class PostProvider extends ChangeNotifier {
   }
 }
 
-class CommunityScreen extends StatelessWidget {
+class CommunityScreen extends StatefulWidget {
+  @override
+  _CommunityScreenState createState() => _CommunityScreenState();
+}
+
+class _CommunityScreenState extends State<CommunityScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // 화면이 초기화될 때 게시물 데이터를 가져오기
+    final postProvider = Provider.of<PostProvider>(context, listen: false);
+    postProvider.fetchPosts(); // 데이터 로드
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => PostProvider(),
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        routes: {
-          '/CommunityScreen': (context) => CommunityScreen(),
-          '/WritePostScreen': (context) => WritePostScreen(),
-        },
-        title: '매일매일 챌린지',
-        theme: ThemeData(primarySwatch: Colors.blue),
-        home: Scaffold(
-            appBar: AppBar(
-              backgroundColor: Colors.pink[100],
-              title: Text(
-                '챌린지 커뮤니티 게시판',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              leading: IconButton(
-                icon: Icon(Icons.arrow_back),
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => ChallengeScreen()),
-                  );
-                },
-              ),
-              actions: [
-                Builder(
-                  builder: (context) => TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => WritePostScreen()),
-                      );
-                    },
-                    child: Text('글쓰기', style: TextStyle(color: Colors.black)),
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.pink[100],
+        title: Text(
+          '챌린지 커뮤니티 게시판',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => ChallengeScreen()),
+            );
+          },
+        ),
+        actions: [
+          Builder(
+            builder: (context) => TextButton(
+              onPressed: () async {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => WritePostScreen(),
                   ),
-                ),
-              ],
-            ),
-            body: Consumer<PostProvider>(
-              builder: (context, postProvider, child) {
-                return Column(
-                  children: [
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: postProvider.currentPosts.length,
-                        itemBuilder: (context, index) {
-                          final post = postProvider.currentPosts[index];
-                          final commentCount =
-                              postProvider.getCommentCount(index);
-
-                          return Column(
-                            children: [
-                              ListTile(
-                                contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 10.0, vertical: 0),
-                                title: Text(
-                                  post['title'],
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14),
-                                ),
-                                subtitle: Padding(
-                                  padding: const EdgeInsets.only(top: 2.0),
-                                  child: Text(
-                                    '날짜: ${post['date']} | 작성자: ${post['author']} | 조회수 ${post['view']}',
-                                    style: TextStyle(
-                                        color: Colors.grey[600], fontSize: 12),
-                                  ),
-                                ),
-                                trailing: Padding(
-                                  padding: EdgeInsets.only(right: 8.0),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.comment,
-                                          color: Colors.pink[300], size: 18),
-                                      SizedBox(height: 4),
-                                      Text(
-                                        '$commentCount',
-                                        style: TextStyle(
-                                          color: Colors.pink[300],
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                onTap: () {
-                                  postProvider.incrementViews(index);
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => PostDetailScreen(
-                                        post: post,
-                                        postIndex:
-                                            (postProvider.currentPage - 1) * 8 +
-                                                index,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                              Divider(
-                                thickness: 1.0,
-                                color: Colors.grey[300],
-                                height: 2.0, // Divider 간격 좁히기
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
-                    PaginationControls(),
-                  ],
                 );
               },
+              child: Text('글쓰기', style: TextStyle(color: Colors.black)),
             ),
-            bottomNavigationBar: CustomBottomNavigationBar(currentIndex: 4)),
+          ),
+        ],
       ),
+      body: Consumer<PostProvider>(
+        builder: (context, postProvider, child) {
+          return Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  itemCount: postProvider.currentPosts.length,
+                  itemBuilder: (context, index) {
+                    final post = postProvider.currentPosts[index];
+                    final commentCount = postProvider.getCommentCount(index);
+
+                    return Column(
+                      children: [
+                        ListTile(
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 10.0, vertical: 0),
+                          title: Text(
+                            post['title'],
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                          subtitle: Padding(
+                            padding: const EdgeInsets.only(top: 2.0),
+                            child: Text(
+                              '날짜: ${post['date']} | 작성자: ${post['author']} | 조회수 ${post['views']}',
+                              style: TextStyle(
+                                  color: Colors.grey[600], fontSize: 12),
+                            ),
+                          ),
+                          trailing: Padding(
+                            padding: EdgeInsets.only(right: 8.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.comment,
+                                    color: Colors.pink[300], size: 18),
+                                SizedBox(height: 4),
+                                Text(
+                                  '$commentCount',
+                                  style: TextStyle(
+                                    color: Colors.pink[300],
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          onTap: () async {
+                            postProvider.incrementViews(index);
+                            // Firestore에서 조회수 업데이트
+                            final postId = post['id']; // 해당 게시물의 ID
+                            await FirebaseFirestore.instance
+                                .collection('posts')
+                                .doc(postId)
+                                .update({
+                              'views': FieldValue.increment(1),
+                            });
+
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PostDetailScreen(
+                                  post: post,
+                                  postIndex: (postProvider.currentPage - 1) * 8 + index,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        Divider(
+                          thickness: 1.0,
+                          color: Colors.grey[300],
+                          height: 2.0,
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+              PaginationControls(),
+            ],
+          );
+        },
+      ),
+      bottomNavigationBar: CustomBottomNavigationBar(currentIndex: 4),
     );
   }
 }
@@ -360,6 +490,29 @@ class _WritePostScreenState extends State<WritePostScreen> {
     titleController = TextEditingController(text: widget.initialTitle);
     authorController = TextEditingController(text: widget.initialAuthor);
     contentController = TextEditingController(text: widget.initialContent);
+
+    if (widget.isEditing && widget.postIndex != null) {
+      // 게시물 수정 모드라면 Firestore에서 해당 게시물 데이터 로드
+      _loadPostData(widget.postIndex!);
+    }
+  }
+
+  Future<void> _loadPostData(int postIndex) async {
+    try {
+      var postDoc = await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(postIndex.toString())
+          .get();
+      if (postDoc.exists) {
+        setState(() {
+          titleController.text = postDoc['title'];
+          authorController.text = postDoc['author'];
+          contentController.text = postDoc['content'];
+        });
+      }
+    } catch (e) {
+      print("Error loading post data: $e");
+    }
   }
 
   @override
@@ -373,18 +526,18 @@ class _WritePostScreenState extends State<WritePostScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.isEditing ? '게시글 수정' : '게시글 작성'),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () {
-            // 포커스 해제인데 오류나서 미룬이
-            // FocusScope.of(context).unfocus();
-            // 뒤로 가기
-            Navigator.pop(context);
-          },
+        appBar: AppBar(
+          title: Text(widget.isEditing ? '게시글 수정' : '게시글 작성'),
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back),
+            onPressed: () {
+              // 포커스 해제인데 오류나서 미룬이
+              // FocusScope.of(context).unfocus();
+              // 뒤로 가기
+              Navigator.pop(context);
+            },
+          ),
         ),
-      ),
         body: Padding(
           padding: EdgeInsets.all(16.0),
           child: Column(
@@ -395,16 +548,19 @@ class _WritePostScreenState extends State<WritePostScreen> {
                 controller: titleController,
                 decoration: InputDecoration(
                   labelText: '제목',
-                  labelStyle: TextStyle(color: Colors.pink[300]), // 라벨 색상 핑크로 설정
+                  labelStyle:
+                      TextStyle(color: Colors.pink[300]), // 라벨 색상 핑크로 설정
                   filled: true,
                   fillColor: Colors.pink[50], // 배경 색상 연한 핑크
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0), // 둥근 모서리
-                    borderSide: BorderSide(color: Colors.pink[300]!, width: 2), // 테두리 색상 및 두께
+                    borderSide: BorderSide(
+                        color: Colors.pink[300]!, width: 2), // 테두리 색상 및 두께
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
-                    borderSide: BorderSide(color: Colors.pink[300]!, width: 2), // 포커스 시 테두리 색상
+                    borderSide: BorderSide(
+                        color: Colors.pink[300]!, width: 2), // 포커스 시 테두리 색상
                   ),
                 ),
               ),
@@ -472,14 +628,18 @@ class _WritePostScreenState extends State<WritePostScreen> {
                   }
 
                   final date = DateTime.now().toString().substring(5, 10);
-                  final view = 0;
+                  final views = 0;
 
                   if (widget.isEditing && widget.postIndex != null) {
                     // 게시물 수정
-                    context.read<PostProvider>().updatePost(widget.postIndex!, title, author, content);
+                    context
+                        .read<PostProvider>()
+                        .updatePost(widget.postIndex!, title, author, content);
                   } else {
                     // 새 게시물 작성
-                    context.read<PostProvider>().addPost(title, author, date, view, content);
+                    context
+                        .read<PostProvider>()
+                        .addPost(title, author, date, views, content);
                   }
                   Navigator.pop(context);
                 },
@@ -488,7 +648,8 @@ class _WritePostScreenState extends State<WritePostScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30.0), // 둥근 모서리 설정
                   ),
-                  padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 32.0), // 패딩 추가
+                  padding: EdgeInsets.symmetric(
+                      vertical: 16.0, horizontal: 32.0), // 패딩 추가
                   textStyle: TextStyle(
                     fontSize: 16, // 글자 크기
                     fontWeight: FontWeight.bold, // 글자 두께
@@ -499,8 +660,7 @@ class _WritePostScreenState extends State<WritePostScreen> {
               ),
             ],
           ),
-        )
-    );
+        ));
   }
 }
 
@@ -558,7 +718,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 ),
                 SizedBox(width: 20),
                 Text(
-                  '조회수: ${post['view']}',
+                  '조회수: ${post['views']}',
                   style: TextStyle(fontSize: 14, color: Colors.grey),
                 ),
                 SizedBox(width: 20),
@@ -687,43 +847,66 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             Expanded(
               child: Consumer<PostProvider>(
                 builder: (context, postProvider, child) {
-                  final comments = postProvider.posts[widget.postIndex]
-                      ['comments'] as List<Map<String, String>>;
+                  // Firestore에서 가져온 데이터 변환
+                  final rawComments =
+                      postProvider.posts[widget.postIndex]['comments'] ?? [];
+
+                  // List<Map<String, String>>로 변환
+                  final comments = rawComments is List
+                      ? rawComments.map((e) {
+                          if (e is Map) {
+                            // Map 형태로 변환 가능하면 Map<String, String>으로 변환
+                            return Map<String, String>.from(e);
+                          } else {
+                            // 잘못된 데이터 형태인 경우 기본 값으로 처리
+                            return {
+                              'commentAuthor': 'Unknown',
+                              'commentContent': e.toString(),
+                            };
+                          }
+                        }).toList()
+                      : <Map<String, String>>[]; // 잘못된 데이터는 빈 리스트로 처리
+
+                  // comments가 비어있는지 확인
+                  if (comments.isEmpty) {
+                    return Center(child: Text('댓글이 없습니다.'));
+                  }
+
                   return ListView.builder(
-                    itemCount: comments.length,
+                    itemCount: comments.length, // comments의 길이에 맞게 설정
                     itemBuilder: (context, index) {
-                      // 범위를 벗어난 index는 처리하지 않음
-                      if (index < postProvider.posts.length) {
-                        return ListTile(
-                          title: Text(
-                            '작성자: ${comments[index]['author']}',
-                            style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.normal), // 작게 보이게
-                          ),
-                          subtitle: Text(
-                            comments[index]['content']!,
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.normal), // 크게 보이게
-                          ),
-                          trailing: IconButton(
-                            icon: Icon(Icons.delete, color: Colors.grey),
-                            onPressed: () {
-                              postProvider.deleteComment(
-                                  widget.postIndex, index);
-                            },
-                          ),
-                        );
-                      } else {
-                        return Container(); // 인덱스가 잘못된 경우 빈 공간 반환
-                      }
+                      // 댓글 데이터가 null인지 체크하고, 기본값으로 처리
+                      final commentAuthor =
+                          comments[index]['commentAuthor'] ?? 'Unknown';
+                      final commentContent =
+                          comments[index]['commentContent'] ?? '내용 없음';
+
+                      return ListTile(
+                        title: Text(
+                          '작성자: $commentAuthor',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.normal), // 작게 보이게
+                        ),
+                        subtitle: Text(
+                          commentContent,
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.normal), // 크게 보이게
+                        ),
+                        trailing: IconButton(
+                          icon: Icon(Icons.delete, color: Colors.grey),
+                          onPressed: () {
+                            postProvider.deleteComment(widget.postIndex, index);
+                          },
+                        ),
+                      );
                     },
                   );
                 },
               ),
             ),
-            // 댓글 작성
+
             // 댓글 작성 부분
             Row(
               children: [
@@ -732,12 +915,15 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     controller: commentAuthorController,
                     decoration: InputDecoration(
                       labelText: '작성자',
-                      labelStyle: TextStyle(color: Colors.pink[300]), // 라벨 색상 핑크
+                      labelStyle:
+                          TextStyle(color: Colors.pink[300]), // 라벨 색상 핑크
                       focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.pink[300]!), // 포커스 시 하단 선 색상 핑크
+                        borderSide: BorderSide(
+                            color: Colors.pink[300]!), // 포커스 시 하단 선 색상 핑크
                       ),
                       enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.pink[200]!), // 기본 하단 선 색상 핑크
+                        borderSide: BorderSide(
+                            color: Colors.pink[200]!), // 기본 하단 선 색상 핑크
                       ),
                     ),
                     style: TextStyle(color: Colors.black87), // 텍스트 색상
@@ -757,12 +943,15 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     controller: commentController,
                     decoration: InputDecoration(
                       labelText: '댓글 작성',
-                      labelStyle: TextStyle(color: Colors.pink[300]), // 라벨 색상 핑크
+                      labelStyle:
+                          TextStyle(color: Colors.pink[300]), // 라벨 색상 핑크
                       focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.pink[300]!), // 포커스 시 하단 선 색상 핑크
+                        borderSide: BorderSide(
+                            color: Colors.pink[300]!), // 포커스 시 하단 선 색상 핑크
                       ),
                       enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.pink[200]!), // 기본 하단 선 색상 핑크
+                        borderSide: BorderSide(
+                            color: Colors.pink[200]!), // 기본 하단 선 색상 핑크
                       ),
                     ),
                     style: TextStyle(color: Colors.black87), // 텍스트 색상

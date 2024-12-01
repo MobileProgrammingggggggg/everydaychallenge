@@ -7,7 +7,7 @@ import 'package:get/get.dart';
 import 'Main_test.dart';
 import 'Calendar_screen.dart';
 // import 'Community_Provider.dart';
-import 'Community_Provider.dart';
+import 'Community_Firebase.dart';
 
 class CustomBottomNavigationBar extends StatelessWidget {
   final int currentIndex; // 외부에서 currentIndex를 전달받음

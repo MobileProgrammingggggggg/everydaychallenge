@@ -10,6 +10,8 @@ import 'firebase_options.dart';
 import 'firebase_initializer.dart';
 import 'package:get/get.dart';
 import 'global.dart'; // 추가
+import 'package:provider/provider.dart';
+import 'Community_Provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:math';
@@ -32,7 +34,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false, // 디버그 버튼 가리기
       home: AuthenticationWrapper(),
-
     );
   }
 }
