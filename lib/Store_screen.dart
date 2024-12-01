@@ -1,8 +1,12 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'CustomBottomNavigationBar.dart';
 import 'Ask_again_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
+import 'Main_test.dart';
 
 void main() {
   runApp(MaterialApp(
@@ -142,22 +146,18 @@ class _StoreScreenState extends State<StoreScreen> {
 
     // 초기 아이템 목록
     Map<String, int> items = {
-      "기록 삭제권": 0,
-      "난이도 선택권": 0,
-      "룰렛 재추첨권": 0,
+      "룰렛판 바꾸기": 0,
       "챌린지 스킵권": 0,
       "포인트 2배권": 0,
-      "하루 연장권": 0,
+      "포인트 랜덤박스": 0,
     };
 
     if (result.exists) {
       // Firestore에서 가져온 데이터를 사용하여 아이템 수를 업데이트
-      items["기록 삭제권"] = result.data()?['기록 삭제권'] ?? 0;
-      items["난이도 선택권"] = result.data()?['난이도 선택권'] ?? 0;
-      items["룰렛 재추첨권"] = result.data()?['룰렛 재추첨권'] ?? 0;
+      items["룰렛판 바꾸기"] = result.data()?['룰렛 바꾸기'] ?? 0;
       items["챌린지 스킵권"] = result.data()?['챌린지 스킵권'] ?? 0;
       items["포인트 2배권"] = result.data()?['포인트 2배권'] ?? 0;
-      items["하루 연장권"] = result.data()?['하루 연장권'] ?? 0;
+      items["포인트 랜덤박스"] = result.data()?['포인트 랜덤박스'] ?? 0;
     }
 
     return items;
@@ -187,30 +187,34 @@ class _StoreScreenState extends State<StoreScreen> {
             children: items.entries.map((entry) {
               IconData icon;
               switch (entry.key) {
-                case "룰렛 재추첨권":
+                case "룰렛판 바꾸기":
                   icon = Icons.refresh;
                   break;
                 case "챌린지 스킵권":
                   icon = Icons.flash_on;
                   break;
-                case "하루 연장권":
-                  icon = Icons.access_time;
-                  break;
                 case "포인트 2배권":
                   icon = Icons.double_arrow;
                   break;
-                case "기록 삭제권":
-                  icon = Icons.delete_forever;
-                  break;
-                case "난이도 선택권":
+                case "포인트 랜덤박스":
                   icon = Icons.auto_fix_high;
                   break;
                 default:
                   icon = Icons.help_outline;
               }
-              return GestureDetector(
+              return MouseRegion(
+                cursor: SystemMouseCursors.click, // 마우스 커서 변경
+                child: GestureDetector(
                 onTap: () {
-                  print("${entry.key} 클릭됨");
+                  if(entry.key == '챌린지 스킵권'){
+                    _handleSkip(context);
+                  }
+                  if(entry.key == '포인트 2배권'){
+                    _handleDouble(context);
+                  }
+                  if(entry.key == '포인트 랜덤박스'){
+                    _handleRandom(context);
+                  }
                 },
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -220,6 +224,7 @@ class _StoreScreenState extends State<StoreScreen> {
                     Text(entry.key, style: TextStyle(fontSize: 14)),
                     Text('${entry.value}개', style: TextStyle(fontSize: 12)),
                   ],
+                ),
                 ),
               );
             }).toList(),
@@ -253,6 +258,282 @@ class _StoreScreenState extends State<StoreScreen> {
         ),
       ),
     );
+  }
+
+  void _handleSkip(BuildContext context) {
+    // 다이얼로그 띄우기
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("챌린지 스킵권"),
+          content: Text("오늘의 챌린지를 스킵할까요?"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text("취소"),
+            ),
+            TextButton(
+              onPressed: () {
+                _skipLogic();
+                Navigator.pop(context);
+              },
+              child: Text("확인"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _skipLogic() async {
+    try {
+      // Firestore의 'users' 컬렉션에서 해당 uid를 가진 문서를 읽어옵니다.
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get(); // .get()을 사용하여 문서를 한 번만 읽어옵니다.
+
+      if (snapshot.exists) {
+        // 데이터가 존재하면 'challengeFlag' 값을 확인합니다.
+        Map<String, dynamic> data = snapshot.data() as Map<String, dynamic>;
+
+        // challengeFlag 값 가져오기
+        int skipTicket = data['챌린지 스킵권'];
+        int challengeFlag = data['challengeFlag'];
+        String selectedChallenge = data['selectedChallenge'];
+
+
+        if (challengeFlag == 1 || challengeFlag == 2) {
+          if(skipTicket>0){
+            skipTicket --;
+            challengeFlag = 3;
+            selectedChallenge = "오늘의 챌린지는 스킵되었습니다.";
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => ChallengeScreen()),
+            );
+
+            // Firestore 문서 업데이트
+            await FirebaseFirestore.instance.collection('users').doc(uid).update({
+              '챌린지 스킵권' : skipTicket,
+              'challengeFlag': challengeFlag, // challengeFlag 값을 3으로 설정
+              'selectedChallenge': selectedChallenge, // selectedChallenge 값을 변경
+            });
+
+            // 변경된 데이터를 로컬에서 사용하기 위해 setState() 호출
+            setState(() {
+              // 상태 업데이트 코드 (예: UI에 반영)
+            });
+          }
+          else {
+            _errorAlert("아이템을 보유하고 있지 않습니다.");
+          }
+        }
+      }
+    } catch (e) {
+      print("Error getting user data: $e");
+    }
+  }
+
+  void _handleDouble(BuildContext context) {
+    // 다이얼로그 띄우기
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("포인트 2배권"),
+          content: Text("오늘의 챌린지포인트를 2배 획득합니다."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text("취소"),
+            ),
+            TextButton(
+              onPressed: () {
+                _doubleLogic();
+                Navigator.pop(context);
+              },
+              child: Text("확인"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _doubleLogic() async {
+    try {
+      // Firestore의 'users' 컬렉션에서 해당 uid를 가진 문서를 읽어옵니다.
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get(); // .get()을 사용하여 문서를 한 번만 읽어옵니다.
+
+      if (snapshot.exists) {
+        // 데이터가 존재하면 'challengeFlag' 값을 확인합니다.
+        Map<String, dynamic> data = snapshot.data() as Map<String, dynamic>;
+
+        // challengeFlag 값 가져오기
+        int doubleTicket = data['포인트 2배권'];
+        int challengeFlag = data['challengeFlag'];
+        int points = data['points'];
+
+
+        if (challengeFlag == 3) {
+          if(doubleTicket>0){
+            doubleTicket --;
+            points +=10;
+            _noticeAlert("오늘의 챌린지 포인트가 2배로 적립되었습니다.");
+
+            // Firestore 문서 업데이트
+            await FirebaseFirestore.instance.collection('users').doc(uid).update({
+              '포인트 2배권' : doubleTicket,
+              'points' : points,
+            });
+
+            // 변경된 데이터를 로컬에서 사용하기 위해 setState() 호출
+            setState(() {
+              // 상태 업데이트 코드 (예: UI에 반영)
+            });
+          }
+          else {
+            _errorAlert("아이템을 보유하고 있지 않습니다.");
+          }
+        }
+        else {
+          _errorAlert("오늘의 챌린지를 먼저 완료해주세요.");
+        }
+      }
+    } catch (e) {
+      print("Error getting user data: $e");
+    }
+  }
+
+  void _handleRandom(BuildContext context) {
+    // 다이얼로그 띄우기
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("포인트 랜덤박스"),
+          content: Text("10p ~ 100p 사이의 랜덤 포인트를 획득합니다."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text("취소"),
+            ),
+            TextButton(
+              onPressed: () {
+                _RandomLogic();
+                Navigator.pop(context);
+              },
+              child: Text("확인"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _RandomLogic() async {
+    try {
+      // Firestore의 'users' 컬렉션에서 해당 uid를 가진 문서를 읽어옵니다.
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get(); // .get()을 사용하여 문서를 한 번만 읽어옵니다.
+
+      if (snapshot.exists) {
+        // 데이터가 존재하면 'challengeFlag' 값을 확인합니다.
+        Map<String, dynamic> data = snapshot.data() as Map<String, dynamic>;
+
+        // challengeFlag 값 가져오기
+        int RandomTicket = data['포인트 랜덤박스'];
+        int points = data['points'];
+
+
+        if (points > 0) {
+          if(RandomTicket>0){
+            RandomTicket --;
+            Random random = Random();
+            int result = random.nextInt(91);
+            points +=result;
+
+            _noticeAlert("축하합니다! " + result.toString() + "p를 획득하였습니다!");
+
+            // Firestore 문서 업데이트
+            await FirebaseFirestore.instance.collection('users').doc(uid).update({
+              '포인트 랜덤박스' : RandomTicket,
+              'points' : points,
+            });
+
+            // 변경된 데이터를 로컬에서 사용하기 위해 setState() 호출
+            setState(() {
+              // 상태 업데이트 코드 (예: UI에 반영)
+            });
+          }
+          else {
+            _errorAlert("아이템을 보유하고 있지 않습니다.");
+          }
+        }
+      }
+    } catch (e) {
+      print("Error getting user data: $e");
+    }
+  }
+
+  void _errorAlert(String msg){
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("오류"),
+          content: Text(msg),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text("확인"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _noticeAlert(String msg){
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,  // 내용 크기를 최소화
+            children: [
+              Image.asset('assets/images/good.png', height: 100),
+              SizedBox(height: 10),  // 간격을 추가
+              Text(msg),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();  // 다이얼로그를 닫음
+              },
+              child: Text('확인'),
+            ),
+          ],
+        );
+      },
+    );
+
   }
 
   @override
@@ -318,38 +599,31 @@ class _StoreScreenState extends State<StoreScreen> {
                   children: [
                     ShopItem(
                       icon: Icons.refresh,
-                      title: "룰렛 재추첨권",
+                      title: "룰렛판 바꾸기",
                       points: 30,
-                      description: "한 번 더 룰렛을 돌릴 수 있습니다.",
-                      onTap: () => _showPurchaseDialog(context, "룰렛 재추첨권", 30),
+                      description: "룰렛판을 변경할 수 있습니다.",
+                      onTap: () => _showPurchaseDialog(context, "룰렛판 바꾸기", 30),
                     ),
                     ShopItem(
                       icon: Icons.flash_on,
                       title: "챌린지 스킵권",
                       points: 100,
-                      description: "하루 한 번 챌린지를 스킵할 수 있습니다.",
+                      description: "오늘의 챌린지를 스킵할 수 있습니다.",
                       onTap: () => _showPurchaseDialog(context, "챌린지 스킵권", 100),
-                    ),
-                    ShopItem(
-                      icon: Icons.access_time,
-                      title: "하루 연장권",
-                      points: 50,
-                      description: "챌린지 기간을 하루 연장할 수 있습니다.",
-                      onTap: () => _showPurchaseDialog(context, "하루 연장권", 50),
                     ),
                     ShopItem(
                       icon: Icons.double_arrow,
                       title: "포인트 2배권",
                       points: 50,
-                      description: "포인트 적립을 2배로 해줍니다.",
+                      description: "오늘의 챌린지포인트를 2배 획득합니다.",
                       onTap: () => _showPurchaseDialog(context, "포인트 2배권", 50),
                     ),
                     ShopItem(
-                      icon: Icons.delete_forever,
-                      title: "기록 삭제권",
-                      points: 30,
-                      description: "하루의 기록을 삭제할 수 있습니다.",
-                      onTap: () => _showPurchaseDialog(context, "기록 삭제권", 30),
+                      icon: Icons.auto_fix_high,
+                      title: "포인트 랜덤박스",
+                      points: 50,
+                      description: "10p ~ 100p 사이의 포인트를 획득합니다.",
+                      onTap: () => _showPurchaseDialog(context, "포인트 랜덤박스", 50),
                     ),
                   ],
                 ),
