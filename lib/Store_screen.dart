@@ -47,15 +47,13 @@ class _StoreScreenState extends State<StoreScreen> {
       '$itemName': FieldValue.increment(1),
     });
 
-
     setState(() {
-      points -= itemCost;
       purchasedItems.update(itemName, (value) => value + 1, ifAbsent: () => 1);
     });
   }
 
-
-  void _showPurchaseDialog(BuildContext context, String itemName, int itemCost) {
+  void _showPurchaseDialog(
+      BuildContext context, String itemName, int itemCost) {
     showDialog(
       context: context,
       builder: (context) => Ask_again(
@@ -139,7 +137,8 @@ class _StoreScreenState extends State<StoreScreen> {
   }
 
   Future<Map<String, int>> _fetchPurchasedItems() async {
-    var result = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    var result =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
 
     // 초기 아이템 목록
     Map<String, int> items = {
@@ -256,7 +255,6 @@ class _StoreScreenState extends State<StoreScreen> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -284,7 +282,7 @@ class _StoreScreenState extends State<StoreScreen> {
           Column(
             children: [
               Padding(
-                padding: EdgeInsets.symmetric( horizontal: 32, vertical: 16),
+                padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 child: Container(
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
@@ -396,13 +394,18 @@ class ShopItem extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text(title,
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
                     SizedBox(height: 5),
-                    Text(description, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                    Text(description,
+                        style:
+                            TextStyle(color: Colors.grey[600], fontSize: 12)),
                   ],
                 ),
               ),
-              Text("$points P", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              Text("$points P",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             ],
           ),
         ),
