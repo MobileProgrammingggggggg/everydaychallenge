@@ -18,29 +18,35 @@ class StoreScreen extends StatefulWidget {
 class _StoreScreenState extends State<StoreScreen> {
   String uid = FirebaseAuth.instance.currentUser!.uid;
   int points = 0;
+  Map<String, int> purchasedItems = {};
 
   @override
   void initState() {
     super.initState();
-    getUserInfo();
+    listenToUserPoints(); // 포인트의 실시간 변경 사항을 반영하기 위해 리스너 설정
   }
 
-  getUserInfo() async {
-    var result = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-    //print(result.data());
-    if (result.exists) {
-      setState(() {
-        points = result.data()?['points'] ?? 0; // 'points' 필드에서 포인트 값을 가져옴
-      });
-    }
+// Firestore 실시간 리스너를 사용하여 포인트 데이터 가져오기
+  void listenToUserPoints() {
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .snapshots()
+        .listen((snapshot) {
+      if (snapshot.exists) {
+        setState(() {
+          points = snapshot.data()?['points'] ?? 0; // Firestore에서 변경된 포인트 반영
+        });
+      }
+    });
   }
-  Map<String, int> purchasedItems = {};
 
   void _buyItem(String itemName, int itemCost) async {
     await FirebaseFirestore.instance.collection('users').doc(uid).update({
       'points': FieldValue.increment(-itemCost),
       '$itemName': FieldValue.increment(1),
     });
+
 
     setState(() {
       points -= itemCost;

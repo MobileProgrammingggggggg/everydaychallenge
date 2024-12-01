@@ -25,7 +25,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options:
-        DefaultFirebaseOptions.currentPlatform, // 웹에서 FirebaseOptions을 가져옵니다.
+    DefaultFirebaseOptions.currentPlatform, // 웹에서 FirebaseOptions을 가져옵니다.
   );
   runApp(MyApp());
 }
@@ -248,7 +248,7 @@ class _CountdownTextState extends State<CountdownText> {
   void _calculateTimeUntilMidnight() {
     final now = DateTime.now();
     final midnight =
-        DateTime(now.year, now.month, now.day + 1); // 자정 (다음 날 00:00)
+    DateTime(now.year, now.month, now.day + 1); // 자정 (다음 날 00:00)
     final difference = midnight.difference(now);
 
     setState(() {
@@ -298,7 +298,7 @@ class _CountdownTextState extends State<CountdownText> {
   Future<void> _checkChallengeFlag() async {
     String uid = FirebaseAuth.instance.currentUser!.uid;
     var result =
-        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    await FirebaseFirestore.instance.collection('users').doc(uid).get();
 
     if (result.exists) {
       var data = result.data()?['challengeFlag'];
@@ -424,7 +424,7 @@ class QuoteService {
       var docs = snapshot.docs;
       if (docs.isNotEmpty) {
         var randomIndex =
-            Random().nextInt(docs.length); // 0부터 docs.length-1 사이의 랜덤 인덱스 선택
+        Random().nextInt(docs.length); // 0부터 docs.length-1 사이의 랜덤 인덱스 선택
         return docs[randomIndex]['quote']; // 랜덤 인덱스에 해당하는 명언 반환
       }
       return '명언을 불러올 수 없습니다.'; // 데이터가 없으면 기본 문구 반환
@@ -485,10 +485,10 @@ class _QuoteWidgetState extends State<QuoteWidget> {
                   fit: BoxFit.scaleDown, // 텍스트 크기를 컨테이너에 맞게 줄이기
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    () {
+                        () {
                       String quote = snapshot.data!;
                       List<String> quoteParts =
-                          quote.split('-'); // 하이픈 기준으로 명언과 저자 구분
+                      quote.split('-'); // 하이픈 기준으로 명언과 저자 구분
                       return quoteParts[0]; // 명언 내용
                     }(),
                     style: TextStyle(
@@ -507,7 +507,7 @@ class _QuoteWidgetState extends State<QuoteWidget> {
               Align(
                 alignment: Alignment.centerRight, // 우측 정렬
                 child: Text(
-                  () {
+                      () {
                     String quote = snapshot.data!;
                     List<String> quoteParts = quote.split('-');
                     return quoteParts.length > 1
@@ -557,7 +557,7 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
 
       try {
         DocumentSnapshot snapshot =
-            await _firestore.collection('users').doc(userId).get();
+        await _firestore.collection('users').doc(userId).get();
 
         if (snapshot.exists && snapshot.data() != null) {
           setState(() {
@@ -663,7 +663,7 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
               // 첫 번째 박스: HeaderSection을 감싸는 흰색 박스
               Padding(
                 padding:
-                    const EdgeInsets.only(top: 20, bottom: 5), // 상단과 하단 여백 설정
+                const EdgeInsets.only(top: 20, bottom: 5), // 상단과 하단 여백 설정
 
                 child: Container(
                   width: MediaQuery.of(context).size.width *
@@ -809,21 +809,17 @@ void addSignupDateIfMissing() async {
     if (docSnapshot.exists) {
       final data = docSnapshot.data()!;
       if (data['signupDate'] == null) {
-        // Firestore에 signupDate가 없으면 Authentication의 metadata.creationTime을 가져옴
-        DateTime signupDate = user.metadata.creationTime!;
+        // signupDate 필드가 없는 경우 추가
         await userDoc.update({
-          'signupDate': Timestamp.fromDate(signupDate),
+          'signupDate': Timestamp.fromDate(DateTime.now()),
         });
         print('Signup date added for user: ${user.uid}');
       } else {
         print('Signup date already exists for user: ${user.uid}');
       }
-    } else {
-      print('User document does not exist in Firestore for user: ${user.uid}');
     }
   }
 }
-
 
 void signUpUser(String email, String password) async {
   try {
@@ -852,26 +848,6 @@ void signUpUser(String email, String password) async {
   }
 }
 
-void validateAndFixSignupDate() async {
-  final user = FirebaseAuth.instance.currentUser;
-  if (user != null) {
-    final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
-    final docSnapshot = await userDoc.get();
-
-    if (docSnapshot.exists) {
-      final data = docSnapshot.data()!;
-      if (data['signupDate'] == null) {
-        DateTime signupDate = user.metadata.creationTime!;
-        await userDoc.update({
-          'signupDate': Timestamp.fromDate(signupDate),
-        });
-        print('Fixed missing signupDate for user: ${user.uid}');
-      }
-    }
-  }
-}
-
-
 void saveSignupDate() async {
   final user = FirebaseAuth.instance.currentUser;
   if (user != null) {
@@ -893,13 +869,12 @@ void saveSignupDate() async {
     }
   }
 }
-
 void updateDday() async {
   final user = FirebaseAuth.instance.currentUser;
   if (user != null) {
     final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
-    final docSnapshot = await userDoc.get();
 
+    final docSnapshot = await userDoc.get();
     if (docSnapshot.exists) {
       final data = docSnapshot.data()!;
 
@@ -915,16 +890,6 @@ void updateDday() async {
         signupDate = (data['signupDate'] as Timestamp).toDate();
       }
 
-      // 잘못된 signupDate 수정 (예: 모든 사용자가 동일한 날짜로 설정된 경우)
-      if (signupDate.isAfter(DateTime.now())) {
-        // 현재보다 미래의 날짜가 설정된 경우, 올바른 날짜로 수정
-        signupDate = user.metadata.creationTime!;
-        await userDoc.update({
-          'signupDate': Timestamp.fromDate(signupDate),
-        });
-        print('Corrected signup date for user: ${user.uid}');
-      }
-
       // 오늘 날짜를 UTC 기준으로 시간 제외하고 계산
       DateTime today = DateTime.now().toUtc();
       DateTime signupDateOnly = DateTime.utc(signupDate.year, signupDate.month, signupDate.day);
@@ -932,16 +897,13 @@ void updateDday() async {
 
       int daysSinceSignup = todayOnly.difference(signupDateOnly).inDays;
 
-      // Firestore 업데이트 (이미 동일한 D-day가 설정되어 있다면 업데이트하지 않음)
-      if (data['dDay'] == null || data['dDay'] != (daysSinceSignup + 1)) {
-        await userDoc.update({
-          'dDay': daysSinceSignup + 1,
-          'lastUpdated': Timestamp.fromDate(todayOnly),
-        });
-        print('D-day updated to: ${daysSinceSignup + 1}');
-      } else {
-        print('D-day is already up-to-date: ${daysSinceSignup + 1}');
-      }
+      // Firestore 업데이트
+      await userDoc.update({
+        'dDay': daysSinceSignup + 1,
+        'lastUpdated': Timestamp.fromDate(todayOnly),
+      });
+
+      print('D-day updated to: ${daysSinceSignup + 1}');
     } else {
       print('Error: User document not found for user ${user.uid}');
     }
@@ -949,8 +911,6 @@ void updateDday() async {
     print('Error: No user is currently signed in.');
   }
 }
-
-
 
 class HeaderSection extends StatefulWidget {
   @override
