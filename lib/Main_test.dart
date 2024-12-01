@@ -809,17 +809,21 @@ void addSignupDateIfMissing() async {
     if (docSnapshot.exists) {
       final data = docSnapshot.data()!;
       if (data['signupDate'] == null) {
-        // signupDate 필드가 없는 경우 추가
+        // Firestore에 signupDate가 없으면 Authentication의 metadata.creationTime을 가져옴
+        DateTime signupDate = user.metadata.creationTime!;
         await userDoc.update({
-          'signupDate': Timestamp.fromDate(DateTime.now()),
+          'signupDate': Timestamp.fromDate(signupDate),
         });
         print('Signup date added for user: ${user.uid}');
       } else {
         print('Signup date already exists for user: ${user.uid}');
       }
+    } else {
+      print('User document does not exist in Firestore for user: ${user.uid}');
     }
   }
 }
+
 
 void signUpUser(String email, String password) async {
   try {
@@ -848,6 +852,26 @@ void signUpUser(String email, String password) async {
   }
 }
 
+void validateAndFixSignupDate() async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final docSnapshot = await userDoc.get();
+
+    if (docSnapshot.exists) {
+      final data = docSnapshot.data()!;
+      if (data['signupDate'] == null) {
+        DateTime signupDate = user.metadata.creationTime!;
+        await userDoc.update({
+          'signupDate': Timestamp.fromDate(signupDate),
+        });
+        print('Fixed missing signupDate for user: ${user.uid}');
+      }
+    }
+  }
+}
+
+
 void saveSignupDate() async {
   final user = FirebaseAuth.instance.currentUser;
   if (user != null) {
@@ -869,12 +893,13 @@ void saveSignupDate() async {
     }
   }
 }
+
 void updateDday() async {
   final user = FirebaseAuth.instance.currentUser;
   if (user != null) {
     final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
-
     final docSnapshot = await userDoc.get();
+
     if (docSnapshot.exists) {
       final data = docSnapshot.data()!;
 
@@ -890,6 +915,16 @@ void updateDday() async {
         signupDate = (data['signupDate'] as Timestamp).toDate();
       }
 
+      // 잘못된 signupDate 수정 (예: 모든 사용자가 동일한 날짜로 설정된 경우)
+      if (signupDate.isAfter(DateTime.now())) {
+        // 현재보다 미래의 날짜가 설정된 경우, 올바른 날짜로 수정
+        signupDate = user.metadata.creationTime!;
+        await userDoc.update({
+          'signupDate': Timestamp.fromDate(signupDate),
+        });
+        print('Corrected signup date for user: ${user.uid}');
+      }
+
       // 오늘 날짜를 UTC 기준으로 시간 제외하고 계산
       DateTime today = DateTime.now().toUtc();
       DateTime signupDateOnly = DateTime.utc(signupDate.year, signupDate.month, signupDate.day);
@@ -897,13 +932,16 @@ void updateDday() async {
 
       int daysSinceSignup = todayOnly.difference(signupDateOnly).inDays;
 
-      // Firestore 업데이트
-      await userDoc.update({
-        'dDay': daysSinceSignup + 1,
-        'lastUpdated': Timestamp.fromDate(todayOnly),
-      });
-
-      print('D-day updated to: ${daysSinceSignup + 1}');
+      // Firestore 업데이트 (이미 동일한 D-day가 설정되어 있다면 업데이트하지 않음)
+      if (data['dDay'] == null || data['dDay'] != (daysSinceSignup + 1)) {
+        await userDoc.update({
+          'dDay': daysSinceSignup + 1,
+          'lastUpdated': Timestamp.fromDate(todayOnly),
+        });
+        print('D-day updated to: ${daysSinceSignup + 1}');
+      } else {
+        print('D-day is already up-to-date: ${daysSinceSignup + 1}');
+      }
     } else {
       print('Error: User document not found for user ${user.uid}');
     }
@@ -911,6 +949,8 @@ void updateDday() async {
     print('Error: No user is currently signed in.');
   }
 }
+
+
 
 class HeaderSection extends StatefulWidget {
   @override
