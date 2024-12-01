@@ -32,6 +32,12 @@ class _ChallengeButtonState extends State<ChallengeButton> {
       'points': FieldValue.increment(addedPoints),
     });
   }
+  void addScore(int addedScore) async {
+    String uid = FirebaseAuth.instance.currentUser!.uid;
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      'score': FieldValue.increment(addedScore),
+    });
+  }
 
   // Firebase에서 flag 상태를 로드하는 메서드
   void _loadFlag() async {
@@ -143,6 +149,7 @@ class _ChallengeButtonState extends State<ChallengeButton> {
 
                       // 포인트 10점 추가
                       addPoints(10);
+                      addScore(1);
 
                       Navigator.push(
                         context,
