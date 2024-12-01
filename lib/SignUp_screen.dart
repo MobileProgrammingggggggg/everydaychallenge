@@ -19,8 +19,9 @@ class SignUpScreen extends StatelessWidget {
     );
   }
 
-  void _showSuccessDialog(BuildContext context) {
-    showDialog(
+  void _showSuccessDialog(BuildContext context) async {
+    // 다이얼로그를 Future로 호출
+    await showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
@@ -63,11 +64,6 @@ class SignUpScreen extends StatelessWidget {
                 ),
                 onPressed: () {
                   Navigator.of(context).pop(); // 다이얼로그 닫기
-                  // 로그인 화면으로 이동
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => MyApp()),
-                  );
                 },
                 child: Text(
                   '확인',
@@ -80,6 +76,11 @@ class SignUpScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => MyApp()),
     );
   }
 
