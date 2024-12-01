@@ -16,6 +16,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:math';
 import 'dart:async';
+import 'package:intl/intl.dart';
+
 // import 'Community_Provider.dart';
 
 // 메인 화면
@@ -41,6 +43,11 @@ class MyApp extends StatelessWidget {
 class AuthenticationWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      saveSignupDate(); // 앱 실행 시 사용자가 로그인되어 있다면 가입 날짜 저장
+    }
+
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
@@ -152,90 +159,6 @@ class GradientBackground extends StatelessWidget {
         ),
       ),
       child: child,
-    );
-  }
-}
-
-class HeaderSection extends StatefulWidget {
-  @override
-  _HeaderSectionState createState() => _HeaderSectionState();
-}
-
-class _HeaderSectionState extends State<HeaderSection> {
-  String uid = FirebaseAuth.instance.currentUser!.uid;
-  int points = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    getUserInfo();
-  }
-
-  getUserInfo() async {
-    var result =
-        await FirebaseFirestore.instance.collection('users').doc(uid).get();
-    if (result.exists) {
-      setState(() {
-        points = result.data()?['points'] ?? 0; // 'points' 필드에서 포인트 값을 가져옴
-      });
-    }
-  }
-
-
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(5), // 배경과 아이콘 사이의 간격
-                decoration: BoxDecoration(
-                  color: Colors.lightBlue, // 배경 색상
-                  shape: BoxShape.circle, // 동그란 배경
-                ),
-                child: Icon(
-                  Icons.star,
-                  color: Colors.yellowAccent,
-                  size: 16, // 아이콘 크기 설정
-                ),
-              ),
-              SizedBox(width: 5),
-              Text(
-                " $points P", // 데이터베이스에서 가져온 포인트 출력
-                style: TextStyle(
-                  fontFamily: "DoHyeon",
-                  fontSize: 20,
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              Text(
-                "날짜 : D + 9  ",
-                style: TextStyle(
-                    fontFamily: "DoHyeon",
-                    color: AppColors.textBlue,
-                    fontSize: 24),
-              ),
-              Text(
-                "달성률: 98%",
-                style: TextStyle(
-                    fontFamily: "DoHyeon",
-                    color: AppColors.textBlue,
-                    fontSize: 24),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 }
@@ -870,6 +793,204 @@ class ChallengePrompt extends StatelessWidget {
               fontFamily: 'DoHyeon',
               fontSize: 36,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+void addSignupDateIfMissing() async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final docSnapshot = await userDoc.get();
+
+    if (docSnapshot.exists) {
+      final data = docSnapshot.data()!;
+      if (data['signupDate'] == null) {
+        // signupDate 필드가 없는 경우 추가
+        await userDoc.update({
+          'signupDate': Timestamp.fromDate(DateTime.now()),
+        });
+        print('Signup date added for user: ${user.uid}');
+      } else {
+        print('Signup date already exists for user: ${user.uid}');
+      }
+    }
+  }
+}
+
+void signUpUser(String email, String password) async {
+  try {
+    UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+
+    // 회원가입 성공 후 Firestore에 사용자 정보 저장
+    final user = userCredential.user;
+    if (user != null) {
+      final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
+
+      // Firestore에 signupDate 설정
+      await userDoc.set({
+        'signupDate': Timestamp.fromDate(DateTime.now()),
+        'dDay': 1,
+        'lastUpdated': Timestamp.fromDate(DateTime.now()),
+        'points': 0, // 초기 포인트 설정
+      });
+
+      print('User signed up with signupDate set.');
+    }
+  } catch (e) {
+    print('Error signing up user: $e');
+  }
+}
+
+void saveSignupDate() async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    final userDocRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final userDoc = await userDocRef.get();
+
+    if (userDoc.exists && userDoc.data()?['signupDate'] != null) {
+      print('Signup date already exists for user: ${user.uid}');
+      return; // 이미 가입 날짜가 설정된 경우 함수 종료
+    }
+
+    // 가입 날짜를 Authentication의 metadata에서 가져옴
+    final signupDate = user.metadata.creationTime;
+    if (signupDate != null) {
+      await userDocRef.set({
+        'signupDate': Timestamp.fromDate(signupDate),
+      }, SetOptions(merge: true)); // 기존 데이터에 병합
+      print('Signup date added for user: ${user.uid}');
+    }
+  }
+}
+void updateDday() async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
+
+    final docSnapshot = await userDoc.get();
+    if (docSnapshot.exists) {
+      final data = docSnapshot.data()!;
+
+      // signupDate가 없으면 Authentication의 creationTime을 가져와서 사용
+      DateTime signupDate;
+      if (data['signupDate'] == null) {
+        signupDate = user.metadata.creationTime!;
+        await userDoc.update({
+          'signupDate': Timestamp.fromDate(signupDate), // Firestore에 signupDate 저장
+        });
+        print('Signup date set from Authentication metadata for user: ${user.uid}');
+      } else {
+        signupDate = (data['signupDate'] as Timestamp).toDate();
+      }
+
+      // 오늘 날짜를 UTC 기준으로 시간 제외하고 계산
+      DateTime today = DateTime.now().toUtc();
+      DateTime signupDateOnly = DateTime.utc(signupDate.year, signupDate.month, signupDate.day);
+      DateTime todayOnly = DateTime.utc(today.year, today.month, today.day);
+
+      int daysSinceSignup = todayOnly.difference(signupDateOnly).inDays;
+
+      // Firestore 업데이트
+      await userDoc.update({
+        'dDay': daysSinceSignup + 1,
+        'lastUpdated': Timestamp.fromDate(todayOnly),
+      });
+
+      print('D-day updated to: ${daysSinceSignup + 1}');
+    } else {
+      print('Error: User document not found for user ${user.uid}');
+    }
+  } else {
+    print('Error: No user is currently signed in.');
+  }
+}
+
+class HeaderSection extends StatefulWidget {
+  @override
+  _HeaderSectionState createState() => _HeaderSectionState();
+}
+
+class _HeaderSectionState extends State<HeaderSection> {
+  String uid = FirebaseAuth.instance.currentUser!.uid;
+  int points = 0;
+  int dDay = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    saveSignupDate(); // 화면이 생성될 때 가입 날짜 저장 (기존 사용자를 위한 처리)
+    updateDday(); // 화면이 생성될 때 D-day 업데이트
+    getUserInfo();
+  }
+
+  getUserInfo() async {
+    var result =
+    await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    if (result.exists) {
+      setState(() {
+        points = result.data()?['points'] ?? 0; // 'points' 필드에서 포인트 값을 가져옴
+        dDay = result.data()?['dDay'] ?? 1; // 'dDay' 필드에서 D-day 값을 가져옴
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(5), // 배경과 아이콘 사이의 간격
+                decoration: BoxDecoration(
+                  color: Colors.lightBlue, // 배경 색상
+                  shape: BoxShape.circle, // 동그란 배경
+                ),
+                child: Icon(
+                  Icons.star,
+                  color: Colors.yellowAccent,
+                  size: 16, // 아이콘 크기 설정
+                ),
+              ),
+              SizedBox(width: 5),
+              Text(
+                " $points P", // 데이터베이스에서 가져온 포인트 출력
+                style: TextStyle(
+                  fontFamily: "DoHyeon",
+                  fontSize: 20,
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              Text(
+                "날짜 : D + $dDay  ", // Firestore에서 가져온 D-day 출력
+                style: TextStyle(
+                    fontFamily: "DoHyeon",
+                    color: AppColors.textBlue,
+                    fontSize: 24),
+              ),
+              Text(
+                "달성률: 98%",
+                style: TextStyle(
+                    fontFamily: "DoHyeon",
+                    color: AppColors.textBlue,
+                    fontSize: 24),
+              ),
+            ],
           ),
         ],
       ),
