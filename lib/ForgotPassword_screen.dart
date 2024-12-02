@@ -2,8 +2,15 @@ import 'package:flutter/material.dart';
 import 'Error_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // FirebaseAuth 패키지 추가
 import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore 추가
+import 'package:flutter_email_sender/flutter_email_sender.dart';
+import 'package:emailjs/emailjs.dart' as emailjs;
 
-class ForgotPasswordScreen extends StatelessWidget {
+class ForgotPasswordScreen extends StatefulWidget {
+  @override
+  _ForgotPasswordScreenState createState() => _ForgotPasswordScreenState();
+}
+
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _idController = TextEditingController();
 
@@ -16,6 +23,34 @@ class ForgotPasswordScreen extends StatelessWidget {
     );
   }
 
+  /// 이메일JS를 활용한 이메일 전송 함수
+  Future<void> _sendEmailWithEmailJS(String email, String userId) async {
+    try {
+      var response = await emailjs.send(
+        'service_vihaimt', // EmailJS의 Service ID
+        'template_vihaimt', // EmailJS의 Template ID
+        {
+          'to_email': email,
+          'to_name': '사용자', // 수신자 이름
+          'from_name': '고모프 공용 이메일', // 발신자 이름
+          'message': '당신의 ID는 $userId 입니다',
+        },
+        const emailjs.Options(
+          publicKey: 'hEfci6F_djHA8hvjV', // EmailJS Public Key
+          privateKey: 'ivIuEvPfFlCNvRzKXMAJx', // (필요시) Private Key
+        ),
+      );
+      print('EmailJS 전송 성공: $response');
+      _showErrorDialog(context, '가입된 이메일로 ID가 전송되었습니다.');
+    } catch (e) {
+      print('EmailJS 전송 실패: $e');
+      _showErrorDialog(context, '이메일 전송에 실패했습니다: ${e.toString()}');
+    }
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  /// Firestore에서 이메일로 사용자 ID 조회 후 전송
   void _sendEmailWithId(BuildContext context) async {
     String email = _emailController.text;
 
@@ -24,27 +59,29 @@ class ForgotPasswordScreen extends StatelessWidget {
       return;
     }
 
-    // Firestore에서 이메일로 사용자 정보를 가져오기
     try {
+      // Firestore에서 사용자 정보 가져오기
       var result = await FirebaseFirestore.instance
           .collection('users')
           .where('email', isEqualTo: email)
           .get();
 
       if (result.docs.isNotEmpty) {
-        String userId = result.docs.first['id']; // 첫 번째 사용자 ID 가져오기
-        print('ID가 이메일로 전송됩니다: $userId'); // 어떤 ID가 전송되는지 확인
-        print('이메일로 전송되는 이메일: $email'); // 어떤 이메일로 전송되는지 확인
-        _showErrorDialog(context, '가입된 이메일로 ID가 전송되었습니다.');
+        String userId = result.docs.first['id'];
+
+        // EmailJS로 메일 보내기
+        await _sendEmailWithEmailJS(email, userId);
       } else {
         _showErrorDialog(context, '해당 이메일에 대한 사용자가 없습니다.');
       }
     } catch (e) {
+      print('오류 발생: $e');
       _showErrorDialog(context, '오류 발생: ${e.toString()}');
     }
   }
 
-  void _resetPassword(BuildContext context) async {
+  /// Firestore에서 ID로 사용자 정보 조회 후 이메일 전송
+  void _sendEmailWithPassword(BuildContext context) async {
     String id = _idController.text;
 
     if (id.isEmpty) {
@@ -52,22 +89,27 @@ class ForgotPasswordScreen extends StatelessWidget {
       return;
     }
 
-    // Firestore에서 ID로 이메일을 가져오기
     try {
+      // Firestore에서 ID로 사용자 정보 가져오기
       var result = await FirebaseFirestore.instance
           .collection('users')
           .where('id', isEqualTo: id)
           .get();
 
       if (result.docs.isNotEmpty) {
-        String email = result.docs.first['email']; // 첫 번째 이메일 가져오기
-        print('비밀번호 재설정 이메일이 전송됩니다: $email'); // 어떤 이메일로 전송되는지 확인
+        String email = result.docs.first['email']; // 이메일 가져오기
+
+        // EmailJS로 메일 보내기
+        // await _sendEmailWithEmailJS(email, id);
+
+        // Firebase 내장된 비밀번호 재설정 이메일 보내기
         await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-        _showErrorDialog(context, '비밀번호 재설정 이메일이 전송되었습니다.');
+        _showErrorDialog(context, '비밀번호 재설정 링크를 전송하였습니다!');
       } else {
         _showErrorDialog(context, '해당 ID에 대한 사용자가 없습니다.');
       }
     } catch (e) {
+      print('오류 발생: $e');
       _showErrorDialog(context, '오류 발생: ${e.toString()}');
     }
   }
@@ -117,7 +159,8 @@ class ForgotPasswordScreen extends StatelessWidget {
                       cursorColor: Colors.black,
                       decoration: InputDecoration(
                         labelText: 'Email을 입력해주세요...',
-                        labelStyle: TextStyle(color: Colors.black54, fontSize: 12),
+                        labelStyle:
+                            TextStyle(color: Colors.black54, fontSize: 12),
                         border: OutlineInputBorder(),
                         enabledBorder: OutlineInputBorder(
                           borderSide: BorderSide(color: Colors.black),
@@ -175,7 +218,8 @@ class ForgotPasswordScreen extends StatelessWidget {
                       cursorColor: Colors.black,
                       decoration: InputDecoration(
                         labelText: 'ID를 입력해주세요...',
-                        labelStyle: TextStyle(color: Colors.black54, fontSize: 12),
+                        labelStyle:
+                            TextStyle(color: Colors.black54, fontSize: 12),
                         border: OutlineInputBorder(),
                         enabledBorder: OutlineInputBorder(
                           borderSide: BorderSide(color: Colors.black),
@@ -191,10 +235,10 @@ class ForgotPasswordScreen extends StatelessWidget {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () {
-                          _resetPassword(context);
+                          _sendEmailWithPassword(context);
                         },
                         child: Text(
-                          '가입된 Email로 비밀번호가 전송됩니다.',
+                          'Email로 비밀번호 재설정 링크가 전송됩니다.',
                           style: TextStyle(fontSize: 12, color: Colors.white),
                         ),
                         style: ElevatedButton.styleFrom(

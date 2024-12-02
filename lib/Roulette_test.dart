@@ -377,7 +377,7 @@ class _RouletteState extends State<Roulette>
                       style: const TextStyle(
                         color: Colors.lightBlue,
                         fontWeight: FontWeight.bold,
-                        fontSize: 28,
+                        fontSize: 16,
                       ),
                     ),
                     const SizedBox(height: 24), // 텍스트와 버튼 사이의 간격

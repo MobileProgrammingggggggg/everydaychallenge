@@ -9,7 +9,8 @@
       "client_info": {
         "mobilesdk_app_id": "1:1060332507802:android:bba3e3301f6dbb69a9c523",
         "android_client_info": {
-          "package_name": "com.example.everdaychallenge"
+          "REAL_name": "com.example.everdaychallenge",
+          "package_name": "com.example.test_flutter"
         }
       },
       "oauth_client": [],
