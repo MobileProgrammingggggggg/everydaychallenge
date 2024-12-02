@@ -426,26 +426,39 @@ class _CountdownTextState extends State<CountdownText> {
             fontSize: 25,
           ),
         ),
-        if(doublePoint==true)
-          Row(
-            children: [
-              Icon(
-                Icons.double_arrow, // 원하는 아이콘으로 변경
-                color: Colors.orange,
-                size: 20,
+            if (doublePoint == true)
+              Row(
+                children: [
+                  Tooltip(
+                    message: "오늘의 챌린지 포인트가 2배로 적립됩니다.", // 툴팁 메시지
+                    decoration: BoxDecoration(
+                      color: Colors.pink[100], // 툴팁 배경색을 회색으로 설정
+                      borderRadius: BorderRadius.circular(8), // 둥근 모서리
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.double_arrow, // 원하는 아이콘
+                          color: Colors.orange,
+                          size: 20,
+                        ),
+                        SizedBox(width: 5), // 아이콘과 텍스트 간 간격
+                        Text(
+                          "포인트 2배",
+                          style: TextStyle(
+                            fontFamily: "DoHyeon",
+                            color: Colors.black, // 텍스트 색상
+                            fontSize: 18, // 텍스트 크기
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(width: 5), // 아이콘과 텍스트 간 간격
-            Text(
-              "포인트 2배",
-              style: TextStyle(
-                fontFamily: "DoHyeon",
-                color: Colors.black, // 텍스트 색상
-                fontSize: 18, // 텍스트 크기
-              ),
-            ),
+
+
           ],
-        ),
-      ],
         ),
         // 시간, 분, 초 부분 (우측 정렬)
         Text(

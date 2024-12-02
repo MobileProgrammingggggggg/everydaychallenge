@@ -202,6 +202,38 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 }
                 return SizedBox.shrink();
               },
+              // 오늘 날짜의 텍스트 색상 변경
+              todayBuilder: (context, day, focusedDay) {
+                return Container(
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.transparent, // 배경 투명
+                  ),
+                  child: Text(
+                    '${day.day}',
+                    style: TextStyle(
+                      color: Colors.black, // 오늘 날짜 텍스트 색상
+                    ),
+                  ),
+                );
+              },
+              // 선택된 날짜의 텍스트 색상 변경
+              selectedBuilder: (context, day, focusedDay) {
+                return Container(
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.transparent, // 배경 투명
+                  ),
+                  child: Text(
+                    '${day.day}',
+                    style: TextStyle(
+                      color: Colors.black, // 선택된 날짜 텍스트 색상
+                    ),
+                  ),
+                );
+              },
             ),
             calendarStyle: CalendarStyle(
               defaultDecoration: BoxDecoration(
@@ -214,11 +246,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ),
               todayDecoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.blue.shade100.withOpacity(0.7),
+                border: Border.all(color: Colors.transparent), // 테두리를 투명하게 설정
               ),
               selectedDecoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.brightPink.withOpacity(0.5),
+                border: Border.all(color: Colors.transparent), // 선택된 날짜도 투명하게 설정
               ),
               outsideDecoration: BoxDecoration(
                 shape: BoxShape.circle,
