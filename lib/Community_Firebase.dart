@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 import 'Error_screen.dart';
 import 'Main_test.dart';
 import 'dart:math';
-// import 'Ask_again_screen.dart';
+import 'Ask_again_screen.dart';
 
 void main() {
   runApp(CommunityScreen());
@@ -370,15 +370,27 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
   }
 
-  // 글 삭제 함수
+// 글 삭제 함수
   Future<void> _deletePost(String postId) async {
-    try {
-      await FirebaseFirestore.instance.collection('posts').doc(postId).delete();
-      Navigator.pop(context); // 글 삭제 후 이전 화면으로 돌아가기
-    } catch (e) {
-      print('Error deleting post: $e');
+    // 다이얼로그를 띄워서 확인
+    final result = await showDialog<int>(
+      context: context,
+      builder: (BuildContext context) {
+        return Ask_again(message: '정말로 이 글을 삭제하시겠습니까?'); // 삭제 확인 메시지
+      },
+    );
+
+    // 사용자가 확인 버튼을 클릭했을 경우에만 삭제 진행
+    if (result == 1) {
+      try {
+        await FirebaseFirestore.instance.collection('posts').doc(postId).delete();
+        Navigator.pop(context); // 글 삭제 후 이전 화면으로 돌아가기
+      } catch (e) {
+        print('Error deleting post: $e');
+      }
     }
   }
+
 
   // 글 수정 함수
   Future<void> _editPost(String postId, String newContent) async {
