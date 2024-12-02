@@ -35,7 +35,7 @@ class _RouletteState extends State<Roulette> with TickerProviderStateMixin {
     Color(0xFFF89D7C), // 부드러운 핑크, 오렌지 빛이 섞인 느낌
     Color(0xFFFFB5B5), // 연한 핑크, 더욱 밝고 부드러운 느낌
     Color(0xFFFF9A8D), // 살구 핑크, 톤 다운된 느낌
-    Color(0xFFFFD8D8), // 베이지 핑크, 매우 밝고 부드러운 느낌
+    Color(0xFFFF7B7B), // 베이지 핑크, 매우 밝고 부드러운 느낌
   ];
 
   @override
@@ -597,6 +597,12 @@ class RoulettePainter extends CustomPainter {
     final paint = Paint()..style = PaintingStyle.fill;
     final center = Offset(size.width / 2, size.height / 2);
     final radius = min(size.width / 2, size.height / 2);
+
+    // 큰 백그라운드 원 추가
+    final backgroundPaint = Paint()
+      ..color = Colors.black.withOpacity(0.5) // 검정색, 투명도 50%
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center, radius + 10, backgroundPaint); // 기존 원보다 조금 더 큼
 
     for (int i = 0; i < items.length; i++) {
       // 항목마다 개별적으로 그라데이션을 적용하기 위해 색상 배열을 사용
