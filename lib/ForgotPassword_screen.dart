@@ -24,8 +24,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   /// 이메일JS를 활용한 이메일 전송 함수
-  Future<void> _sendEmailWithEmailJS(String email, String userId) async {
+  Future<void> _sendEmailWithEmailJS(String email, String userId, String password) async {
     try {
+
+      String message;
+      if (password == "") {
+        message = '당신의 아이디는 $userId 입니다';
+      } else {
+        message = '당신의 비밀번호는 $password 입니다';
+      }
+
       var response = await emailjs.send(
         'service_vihaimt', // EmailJS의 Service ID
         'template_vihaimt', // EmailJS의 Template ID
@@ -33,7 +41,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           'to_email': email,
           'to_name': '사용자', // 수신자 이름
           'from_name': '고모프 공용 이메일', // 발신자 이름
-          'message': '당신의 ID는 $userId 입니다',
+          'message': message, // 동적으로 설정된 message 사용
         },
         const emailjs.Options(
           publicKey: 'hEfci6F_djHA8hvjV', // EmailJS Public Key
@@ -70,7 +78,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         String userId = result.docs.first['id'];
 
         // EmailJS로 메일 보내기
-        await _sendEmailWithEmailJS(email, userId);
+        await _sendEmailWithEmailJS(email, userId, "");
       } else {
         _showErrorDialog(context, '해당 이메일에 대한 사용자가 없습니다.');
       }
@@ -98,9 +106,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
       if (result.docs.isNotEmpty) {
         String email = result.docs.first['email']; // 이메일 가져오기
+        String password = result.docs.first['password']; // 이메일 가져오기
 
         // EmailJS로 메일 보내기
-        // await _sendEmailWithEmailJS(email, id);
+        // await _sendEmailWithEmailJS(email, userID, password);
 
         // Firebase 내장된 비밀번호 재설정 이메일 보내기
         await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
