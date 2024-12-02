@@ -364,7 +364,7 @@ class _RouletteState extends State<Roulette> with TickerProviderStateMixin {
       builder: (BuildContext context) {
         return Dialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(5),
             side: const BorderSide(color: Colors.black, width: 3),
           ),
           child: Stack(
