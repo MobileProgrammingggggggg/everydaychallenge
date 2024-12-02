@@ -24,7 +24,7 @@ class _RankingScreenState extends State<RankingScreen> {
   Future<void> _fetchUsers() async {
     try {
       final snapshot =
-          await FirebaseFirestore.instance.collection('users').get();
+      await FirebaseFirestore.instance.collection('users').get();
       final usersList = snapshot.docs;
 
       if (usersList.isEmpty) {
@@ -130,43 +130,51 @@ class _RankingScreenState extends State<RankingScreen> {
     return Column(
       children: [
         Container(
-          padding: EdgeInsets.symmetric(vertical: 10),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          height: 250, // 높이를 키워서 전체 영역을 확대
+          padding: EdgeInsets.symmetric(vertical: 20), // 패딩을 추가하여 위아래로 여유 공간 부여
+          child: Column( // Column으로 변경하여 수직 방향으로 정렬
+            mainAxisAlignment: MainAxisAlignment.center, // 수직 중앙에 배치
             children: [
-              _buildTopRankItem(
-                  sortedUsers.length > 1
-                      ? sortedUsers[1].get('score')?.toString() ?? "도전 중"
-                      : "도전 중",
-                  '2등',
-                  sortedUsers.length > 1
-                      ? sortedUsers[1].get('id') ?? 'Unknown'
-                      : 'user',
-                  Color(0xFFC0C0C0)),
-              _buildTopRankItem(
-                  sortedUsers.isNotEmpty
-                      ? sortedUsers[0].get('score')?.toString() ?? "도전 중"
-                      : "도전 중",
-                  '1등',
-                  sortedUsers.isNotEmpty
-                      ? sortedUsers[0].get('id') ?? 'Unknown'
-                      : 'user',
-                  Color(0xFFFFD700),
-                  isCrowned: true),
-              _buildTopRankItem(
-                  sortedUsers.length > 2
-                      ? sortedUsers[2].get('score')?.toString() ?? "도전 중"
-                      : "도전 중",
-                  '3등',
-                  sortedUsers.length > 2
-                      ? sortedUsers[2].get('id') ?? 'Unknown'
-                      : 'user',
-                  Color(0xFFCD7F32)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildTopRankItem(
+                      sortedUsers.length > 1
+                          ? sortedUsers[1].get('score')?.toString() ?? "도전 중"
+                          : "도전 중",
+                      '2등',
+                      sortedUsers.length > 1
+                          ? sortedUsers[1].get('id') ?? 'Unknown'
+                          : 'user',
+                      Color(0xFFC0C0C0)),
+                  _buildTopRankItem(
+                      sortedUsers.isNotEmpty
+                          ? sortedUsers[0].get('score')?.toString() ?? "도전 중"
+                          : "도전 중",
+                      '1등',
+                      sortedUsers.isNotEmpty
+                          ? sortedUsers[0].get('id') ?? 'Unknown'
+                          : 'user',
+                      Color(0xFFFFD700),
+                      isCrowned: true), // 1등의 원을 더 크게 설정
+                  _buildTopRankItem(
+                      sortedUsers.length > 2
+                          ? sortedUsers[2].get('score')?.toString() ?? "도전 중"
+                          : "도전 중",
+                      '3등',
+                      sortedUsers.length > 2
+                          ? sortedUsers[2].get('id') ?? 'Unknown'
+                          : 'user',
+                      Color(0xFFCD7F32)),
+                ],
+              ),
             ],
           ),
         ),
+
+
         Divider(
-          color: Colors.grey.shade300,
+          color: Colors.pink[100],
           thickness: 2,
           indent: 16,
           endIndent: 16,
@@ -176,41 +184,86 @@ class _RankingScreenState extends State<RankingScreen> {
             padding: EdgeInsets.all(16.0),
             itemCount: sortedUsers.length - 3 > 0 ? sortedUsers.length - 3 : 0,
             itemBuilder: (context, index) {
-              final user = sortedUsers[index + 3];
-              return _buildRankRow(
-                user.get('score') != null
+              final user = sortedUsers[index + 3]; // 4등부터 시작
+              final rank = index + 4; // 순위 계산
+
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Colors.pink[100], // 회색 배경
+                  child: Text(
+                    '$rank', // 회색 원 안에 순위만 표시
+                    style: TextStyle(
+                      color:  Color(0xFF7E7E7E), // 숫자 색상
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                title: Text(user.get('id') ?? 'Unknown'), // 이름만 표시
+                trailing: Text(user.get('score') != null
                     ? user.get('score')?.toString() ?? "도전 중"
-                    : "도전 중",
-                '${index + 4}',
-                user.get('id') ?? 'Unknown',
+                    : "도전 중"), // 스코어를 오른쪽에 배치
               );
-              // return _buildRankRow(
-              //   '${user.get('score')} x ${user.get('dDay')}', // 곱한 값 표시
-              //   '${index + 4}',
-              //   user.get('id') ?? 'Unknown',
-              // );
             },
           ),
         ),
+
+
       ],
     );
   }
 
+
+
   Widget _buildTopRankItem(String score, String rank, String name, Color color,
       {bool isCrowned = false}) {
+    // 순위에 따른 크기와 스타일 설정
+    double width, height, fontSize, borderWidth;
+    Color borderColor;
+
+    switch (rank) {
+      case '1등':
+        width = 110;
+        height = 110;
+        fontSize = 22;
+        borderWidth = 4;
+        borderColor = Colors.amber;
+        break;
+      case '2등':
+        width = 90;
+        height = 90;
+        fontSize = 20;
+        borderWidth = 3;
+        borderColor = Colors.grey;
+        break;
+      case '3등':
+        width = 70;
+        height = 70;
+        fontSize = 18;
+        borderWidth = 2;
+        borderColor = Colors.brown;
+        break;
+      default:
+        width = 70;
+        height = 70;
+        fontSize = 16;
+        borderWidth = 1.5;
+        borderColor = Colors.pink[100]!;
+        break;
+    }
+
     return Column(
       children: [
-        if (isCrowned)
+        if (rank == '1등')
           Icon(FontAwesomeIcons.crown, color: Colors.amber, size: 30),
         Container(
-          width: 80, // 원의 너비
-          height: 80, // 원의 높이
+          width: width,
+          height: height,
           decoration: BoxDecoration(
             shape: BoxShape.circle, // 원 모양
             color: color, // 원의 색상
             border: Border.all(
-              color: Colors.pinkAccent[200]!, // 테두리 색상
-              width: 2, // 테두리 두께
+              color: borderColor, // 테두리 색상
+              width: borderWidth, // 테두리 두께
             ),
           ),
           child: Center(
@@ -218,25 +271,32 @@ class _RankingScreenState extends State<RankingScreen> {
               name.length > 4 ? '${name.substring(0, 4)}..' : name,
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 20,
-                fontWeight: isCrowned ? FontWeight.bold : FontWeight.normal,
+                fontSize: fontSize,
+                fontWeight: rank == '1등' ? FontWeight.bold : FontWeight.normal,
               ),
             ),
           ),
         ),
         SizedBox(height: 4),
-        Text(name, style: TextStyle(color: Colors.black)),
+        Text(
+          name,
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: fontSize - 2, // 이름 텍스트 크기는 약간 더 작게
+          ),
+        ),
         SizedBox(height: 4),
         Text(
           score, // 점수 또는 "도전 중" 표시
           style: TextStyle(
-            color: isCrowned ? Colors.amber : Colors.black,
-            fontSize: 18,
+            color: rank == '1등' ? Colors.amber : Colors.black,
+            fontSize: fontSize - 2, // 점수 텍스트 크기 조정
           ),
         ),
       ],
     );
   }
+
 
   Widget _buildRankRow(String score, String rank, String name) {
     return ListTile(
