@@ -24,9 +24,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   /// 이메일JS를 활용한 이메일 전송 함수
-  Future<void> _sendEmailWithEmailJS(String email, String userId, String password) async {
+  Future<void> _sendEmailWithEmailJS(
+      String email, String userId, String password) async {
     try {
-
       String message;
       if (password == "") {
         message = '당신의 아이디는 $userId 입니다';
@@ -113,6 +113,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
         // Firebase 내장된 비밀번호 재설정 이메일 보내기
         await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+
         _showErrorDialog(context, '비밀번호 재설정 링크를 전송하였습니다!');
       } else {
         _showErrorDialog(context, '해당 ID에 대한 사용자가 없습니다.');

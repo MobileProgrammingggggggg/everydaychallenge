@@ -129,6 +129,7 @@ class SignUpScreen extends StatelessWidget {
         '챌린지 스킵권': 1,
         '포인트 2배권': 2,
         '하루 연장권': 3,
+        '룰렛판 바꾸기' : 1,
       });
 
       print('회원가입 성공: ${credential.user?.email}');

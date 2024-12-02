@@ -2,6 +2,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'Ask_again_screen.dart';
+import 'Error_screen.dart';
 import 'package:get/get.dart';
 //import 'package:particle_field/particle_field.dart';
 // 추후 particle 폭죽 이벤트 추가 예정
@@ -18,8 +20,7 @@ class Roulette extends StatefulWidget {
   _RouletteState createState() => _RouletteState();
 }
 
-class _RouletteState extends State<Roulette>
-    with SingleTickerProviderStateMixin {
+class _RouletteState extends State<Roulette> with TickerProviderStateMixin {
   late AnimationController _controller;
   double _rotation = 0.0;
 
@@ -44,6 +45,26 @@ class _RouletteState extends State<Roulette>
       duration: const Duration(seconds: 3),
       vsync: this,
     );
+
+    // 애니메이션 컨트롤러 초기화
+    _scaleController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 300), // 애니메이션 지속 시간
+    );
+
+    // 애니메이션 초기화
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 2.4).animate(
+      CurvedAnimation(parent: _scaleController, curve: Curves.easeInOut),
+    );
+
+    // 애니메이션 값에 따라 offset 초기화
+    _offsetAnimation = Tween<Offset>(
+      begin: Offset(0, 0), // 애니메이션 시작 위치
+      end: Offset(0, 80), // 애니메이션 끝 위치 (y축으로 이동)
+    ).animate(
+      CurvedAnimation(parent: _scaleController, curve: Curves.easeInOut),
+    );
+
     _fetchChallengeItems(); // 데이터 로드 함수 호출
   }
 
@@ -65,7 +86,7 @@ class _RouletteState extends State<Roulette>
     try {
       // Firestore에서 challengelist 컬렉션의 문서 이름들 가져오기
       final challengelistSnapshot =
-      await _firestore.collection('challengelist').get();
+          await _firestore.collection('challengelist').get();
 
       if (challengelistSnapshot.docs.isEmpty) {
         print("challengelist 컬렉션에 문서가 없습니다.");
@@ -74,12 +95,12 @@ class _RouletteState extends State<Roulette>
 
       // 문서들의 ID를 리스트로 저장
       final documentNames =
-      challengelistSnapshot.docs.map((doc) => doc.id).toList();
+          challengelistSnapshot.docs.map((doc) => doc.id).toList();
 
       // 5개의 랜덤 문서 번호 선택
       while (randomDocuments.length < 5) {
         final randomDocument =
-        documentNames[random.nextInt(documentNames.length)];
+            documentNames[random.nextInt(documentNames.length)];
         if (!randomDocuments.contains(randomDocument)) {
           randomDocuments.add(randomDocument);
         }
@@ -97,12 +118,12 @@ class _RouletteState extends State<Roulette>
           final existingChallenges = userSnapshot['selected_challenges'];
           if (existingChallenges != null && existingChallenges.isNotEmpty) {
             // 값이 있으면 업데이트 하지 않음
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text("선택된 챌린지 목록 문서가 이미 존재합니다."),
-                backgroundColor: Colors.pink[100]!, // 핑크색 배경
-              ),
-            );
+            // ScaffoldMessenger.of(context).showSnackBar(
+            //   SnackBar(
+            //     content: Text("선택된 챌린지 목록들이 이미 존재합니다."),
+            //     backgroundColor: Colors.pink[100]!, // 핑크색 배경
+            //   ),
+            // );
             return;
           }
         }
@@ -146,7 +167,7 @@ class _RouletteState extends State<Roulette>
 
       if (userDoc.exists) {
         final documentNames =
-        List<String>.from(userDoc['selected_challenges'] ?? []);
+            List<String>.from(userDoc['selected_challenges'] ?? []);
         if (documentNames.isNotEmpty) {
           _fetchItemsFromSelectedDocuments(documentNames);
         } else {
@@ -233,7 +254,8 @@ class _RouletteState extends State<Roulette>
       }
 
       // Firestore에서 사용자 데이터 가져오기
-      final userDoc = FirebaseFirestore.instance.collection('users').doc(userUid);
+      final userDoc =
+          FirebaseFirestore.instance.collection('users').doc(userUid);
       final snapshot = await userDoc.get();
 
       if (snapshot.exists) {
@@ -243,18 +265,28 @@ class _RouletteState extends State<Roulette>
         if (changeTickets > 0) {
           // 룰렛판 바꾸기 충분하면 진행
           await userDoc.update({
-            '룰렛판 바꾸기': changeTickets - 1, // 스킵권 차감
+            '룰렛판 바꾸기': changeTickets - 1, // 룰렛판 바꾸기 차감
           });
 
           print("룰렛판 바꾸기 1개 소모. 남은 개수: ${changeTickets - 1}");
 
-          // 1. 기존에 저장된 데이터는 무시하고 랜덤으로 새로운 5개 문서 번호를 저장
+          // 기존에 저장된 데이터는 무시하고 랜덤으로 새로운 5개 문서 번호를 저장
           await _saveRandomChallengeDocuments(userUid, true);
 
-          // 2. 새로 고침을 위해 새로운 데이터를 가져오기
+          // 새로 고침을 위해 새로운 데이터를 가져오기
           await _fetchChallengeItems(); // 데이터를 새로 가져오는 함수 호출
         } else {
-          print("챌린지 스킵권이 부족합니다!");
+          print("룰렛판 바꾸기 아이템이 부족합니다!");
+          // 챌린지 스킵권이 부족할 때 다이얼로그 띄우기
+          showDialog(
+            context: context,
+            builder: (context) => ErrorDialog(
+              message: "룰렛판 바꾸기 아이템이 부족합니다!",
+            ),
+          );
+          setState(() {
+            _isLoading = false; // 로딩 끝
+          });
         }
       } else {
         print("사용자 문서를 찾을 수 없습니다.");
@@ -262,13 +294,16 @@ class _RouletteState extends State<Roulette>
     } catch (e) {
       print("오류 발생: $e");
     } finally {
-      setState(() {
-        _isLoading = false; // 로딩 끝
-      });
+      // setState(() {
+      //   _isLoading = false; // 로딩 끝
+      // });
     }
   }
 
   bool _isSpinning = false; // 룰렛 회전 중인지 여부
+  late AnimationController _scaleController;
+  late Animation<double> _scaleAnimation;
+  late Animation<Offset> _offsetAnimation;
 
   void startSpin() {
     if (_isSpinning) return; // 이미 회전 중이면 실행하지 않음
@@ -297,12 +332,19 @@ class _RouletteState extends State<Roulette>
       });
     });
 
+    // 상단부 확대 애니메이션 시작
+    _scaleController.forward(); // 확대 애니메이션
+
     // 스피닝 종료 후 선택된 항목 표시
     final duration =
         spinDuration * (1 - (1 - _controller.value) * decelerationFactor);
     Future.delayed(Duration(milliseconds: duration.round()), () {
       _controller.stop();
       final selectedItemIndex = calculateSelectedItemIndex();
+
+      // 상단부 축소 애니메이션
+      _scaleController.reverse(); // 축소 애니메이션
+
       // 선택된 항목 표시 메시지 지연
       Future.delayed(Duration(milliseconds: resultDelay), () {
         _isSpinning = false; // 회전 종료 시 활성화
@@ -419,72 +461,119 @@ class _RouletteState extends State<Roulette>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("챌린지 룰렛 돌리기")),
+      appBar: AppBar(
+        title: Text("챌린지 룰렛 돌리기"),
+        backgroundColor: Colors.pink[100],
+      ),
       body: GradientBackground(
         child: Center(
           child: _isLoading
               ? SizedBox(
-            width: 200, // 원하는 너비
-            height: 200, // 원하는 높이
-            child: CircularProgressIndicator(
-              strokeWidth: 40, // 로딩바의 두께 조정
-              valueColor:
-              AlwaysStoppedAnimation<Color>(Colors.pink[100]!),
-              // 로딩바 색상 변경
-              backgroundColor: Colors.grey[200], // 배경 색상 설정
-            ),
-          ) // 로딩 중 표시
+                  width: 200, // 원하는 너비
+                  height: 200, // 원하는 높이
+                  child: CircularProgressIndicator(
+                    strokeWidth: 40, // 로딩바의 두께 조정
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(Colors.pink[100]!),
+                    // 로딩바 색상 변경
+                    backgroundColor: Colors.grey[200], // 배경 색상 설정
+                  ),
+                ) // 로딩 중 표시
               : Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Stack(
-                alignment: Alignment.topCenter,
-                children: [
-                  Transform.rotate(
-                    angle: _rotation,
-                    // 룰렛 크기 조정
-                    child: CustomPaint(
-                      size: Size(400, 400),
-                      painter: RoulettePainter(items, colors),
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Stack(
+                      alignment: Alignment.topCenter,
+                      children: [
+                        // 룰렛 크기 조정과 위치 이동
+                        Transform.scale(
+                          scale: _scaleAnimation.value, // 룰렛 크기를 애니메이션에 맞게 조정
+                          child: Transform.translate(
+                            offset: _offsetAnimation.value,
+                            child: Transform.rotate(
+                              angle: _rotation,
+                              child: CustomPaint(
+                                size: Size(360, 360),
+                                painter: RoulettePainter(items, colors),
+                              ),
+                            ),
+                          ),
+                        ),
+                        // 상단 삼각형 아이콘 위치 조정 (Positioned를 직접 사용)
+                        Positioned(
+                          // top: 20 + _offsetAnimation.value.dy,
+                          child: CustomPaint(
+                              size: Size(50, 50),
+                              painter: TrianglePainter(
+                                yPosition: 40, // 삼각형의 y 위치
+                                sideLength:
+                                    24 + (0.5 * _offsetAnimation.value.dy),
+                                // dy 값에 따라 크기 조정, 최소 40부터 시작
+                              )),
+                        ),
+                      ],
                     ),
-                  ),
-                  Positioned(
-                    top: 0,
-                    child: CustomPaint(
-                      size: Size(30, 20),
-                      painter: TrianglePainter(),
+                    SizedBox(height: 20),
+
+                    // 그냥 돌리기
+                    ElevatedButton(
+                      onPressed: _isSpinning ? null : startSpin,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.pink[100], // 버튼 배경색
+                        disabledBackgroundColor: Colors.pink[50], // 비활성화 상태 배경색
+                        foregroundColor: Colors.white, // 텍스트 색상
+                        disabledForegroundColor: Colors.grey, // 비활성화 상태 텍스트 색상
+                      ),
+                      child: Text(
+                        "돌려돌려 돌림판",
+                        style: TextStyle(fontSize: 24), // 글씨 크기 설정
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 20),
+                    SizedBox(height: 10),
 
-              // 그냥 돌리기
-              ElevatedButton(
-                onPressed: _isSpinning ? null : startSpin,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.pink[100], // 버튼 배경색
-                  disabledBackgroundColor: Colors.pink[50], // 비활성화 상태 배경색
-                  foregroundColor: Colors.white, // 텍스트 색상
-                  disabledForegroundColor: Colors.grey, // 비활성화 상태 텍스트 색상
-                ),
-                child: Text("돌려돌려 돌림판"),
-              ),
-              SizedBox(height: 10),
+                    // 리스트 새로 고침 버튼
+                    ElevatedButton(
+                      onPressed: (_isLoading || _isSpinning)
+                          ? null
+                          : () async {
+                        final result = await showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return Ask_again(
+                              message: "정말 목록을 새로 고칠까요?",
+                            );
+                          },
+                        );
 
-              // 리스트 새로 고침 버튼
-              ElevatedButton(
-                onPressed: _isLoading ? null : refreshList,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.pink[100], // 버튼 배경색
-                  disabledBackgroundColor: Colors.pink[50], // 비활성화 상태 배경색
-                  foregroundColor: Colors.white, // 텍스트 색상
-                  disabledForegroundColor: Colors.grey, // 비활성화 상태 텍스트 색상
+                        if (result == 1) {
+                          // 확인 버튼을 눌렀을 때 동작
+                          refreshList();
+                        }
+                        // 취소 버튼을 눌렀으면 아무 동작 안 함
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.pink[200], // 버튼 배경색
+                        disabledBackgroundColor: Colors.pink[50], // 비활성화 상태 배경색
+                        foregroundColor: Colors.white, // 텍스트 색상
+                        disabledForegroundColor: Colors.grey, // 비활성화 상태 텍스트 색상
+                      ),
+                      child: _isLoading
+                          ? CircularProgressIndicator(color: Colors.white) // 로딩 중일 때 로딩 바 표시
+                          : Row(
+                        mainAxisSize: MainAxisSize.min, // 콘텐츠 크기만큼만 Row 사용
+                        children: [
+                          Icon(Icons.refresh, color: Colors.white), // 아이콘 추가
+                          SizedBox(width: 8), // 아이콘과 텍스트 사이 간격
+                          Text(
+                            "룰렛판 바꾸기 사용하기",
+                            style: TextStyle(fontSize: 24),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  ],
                 ),
-                child: Text("마법의 아이템으로 목록을 새로 가져올게"),
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -536,24 +625,58 @@ class RoulettePainter extends CustomPainter {
         paint,
       );
 
-      // 텍스트 그리기
-      final textPainter = TextPainter(
-        text: TextSpan(
-          text: items[i],
-          style: TextStyle(color: Colors.white, fontSize: 14),
-        ),
-        textDirection: TextDirection.ltr,
-      );
-      textPainter.layout();
+      // 텍스트 줄바꿈 및 렌더링
+      final lineHeight = 10.0; // 줄 간격
+      final maxWidth = radius / 2; // 텍스트 최대 너비
+      final words = items[i].split(' '); // 단어 단위로 나눔
+      List<String> lines = [];
+      String currentLine = "";
 
-      // 텍스트 위치 계산
-      final x = center.dx +
-          (radius / 2) * cos(startAngle + sweepAngle / 2) -
-          textPainter.width / 2;
-      final y = center.dy +
-          (radius / 2) * sin(startAngle + sweepAngle / 2) -
-          textPainter.height / 2;
-      textPainter.paint(canvas, Offset(x, y));
+      for (String word in words) {
+        final testLine = currentLine.isEmpty ? word : "$currentLine $word";
+        final testTextPainter = TextPainter(
+          text: TextSpan(
+            text: testLine,
+            style: TextStyle(color: Colors.white, fontSize: 14),
+          ),
+          textDirection: TextDirection.ltr,
+        );
+        testTextPainter.layout(maxWidth: maxWidth);
+
+        if (testTextPainter.width <= maxWidth) {
+          currentLine = testLine;
+        } else {
+          lines.add(currentLine);
+          currentLine = word;
+        }
+      }
+
+      if (currentLine.isNotEmpty) {
+        lines.add(currentLine);
+      }
+
+      // 각 줄을 그리기
+      for (int j = 0; j < lines.length; j++) {
+        final textPainter = TextPainter(
+          text: TextSpan(
+            text: lines[j],
+            style: TextStyle(color: Colors.white, fontSize: 14),
+          ),
+          textDirection: TextDirection.ltr,
+        );
+        textPainter.layout(maxWidth: maxWidth);
+
+        final x = center.dx +
+            (radius / 1.6) * cos(startAngle + sweepAngle / 2) -
+            textPainter.width / 2;
+        final y = center.dy +
+            (radius / 1.6) * sin(startAngle + sweepAngle / 2) -
+            (textPainter.height / 2) -
+            (lines.length * lineHeight / 2) + // 중앙 정렬
+            j * lineHeight;
+
+        textPainter.paint(canvas, Offset(x, y));
+      }
     }
   }
 
@@ -564,14 +687,27 @@ class RoulettePainter extends CustomPainter {
 }
 
 class TrianglePainter extends CustomPainter {
+  final double yPosition; // 삼각형의 y 위치
+  final double sideLength; // 삼각형 한 변의 길이
+
+  // 생성자
+  TrianglePainter({
+    required this.yPosition,
+    required this.sideLength,
+  });
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..color = Colors.blue[100]!;
 
     final path = Path()
-      ..moveTo(size.width / 2, 48)
-      ..lineTo(0, size.height)
-      ..lineTo(size.width, size.height)
+      // 시작 위치 (중앙 위쪽)
+      ..moveTo(size.width / 2, yPosition) // 역삼각형의 꼭짓점 1
+      // 왼쪽 아래 꼭짓점
+      ..lineTo(size.width / 2 - sideLength / 2, yPosition - sideLength)
+      // 오른쪽 아래 꼭짓점
+      ..lineTo(size.width / 2 + sideLength / 2, yPosition - sideLength)
+      // 삼각형 닫기
       ..close();
 
     canvas.drawPath(path, paint);
@@ -579,7 +715,7 @@ class TrianglePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
+    return false; // 매번 새로 그릴 필요가 없으면 false
   }
 }
 
