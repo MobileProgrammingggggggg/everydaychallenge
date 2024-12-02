@@ -269,7 +269,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 : ListView.builder(
               itemCount: _completedDays.length,
               itemBuilder: (context, index) {
-                DateTime completedDay = _completedDays.elementAt(index);
+                List<DateTime> sortedDays = _completedDays.toList()..sort((a, b) => b.compareTo(a));
+                DateTime completedDay = sortedDays[index];
                 String formattedDate =
                     '${completedDay.year}-${completedDay.month}-${completedDay.day}';
                 String challengeName = _completedChallenges[completedDay] ?? '';
