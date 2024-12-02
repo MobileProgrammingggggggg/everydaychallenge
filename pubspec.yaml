@@ -45,7 +45,7 @@ dependencies:
   get: ^4.6.6
   shared_preferences: ^2.3.3
   desktop_window: ^0.4.2
-  workmanager: ^0.4.0
+  workmanager: ^0.5.2
   flutter_email_sender: ^6.0.3
   emailjs: ^4.0.0
 
