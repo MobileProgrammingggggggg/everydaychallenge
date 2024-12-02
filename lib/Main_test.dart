@@ -280,6 +280,8 @@ class _CountdownTextState extends State<CountdownText> {
   late int _seconds;
   late Timer _timer;
   late Timer _notificationTimer; // 알림 확인을 위한 타이머 추가
+  bool? doublePoint;
+  late Future<bool> doublePointFuture;
 
   @override
   void initState() {
@@ -287,6 +289,8 @@ class _CountdownTextState extends State<CountdownText> {
     _calculateTimeUntilMidnight(); // 자정까지의 시간 계산
     _startCountdown(); // 카운트다운 타이머 시작
     _startNotificationCheck(); // 알림 확인 타이머 시작
+    _fetchDoublePoint();
+    doublePointFuture = _fetchDoublePoint();
   }
 
   void _calculateTimeUntilMidnight() {
@@ -364,6 +368,33 @@ class _CountdownTextState extends State<CountdownText> {
     ));
   }
 
+  Future<bool> _fetchDoublePoint() async {
+    try {
+      final userUid = FirebaseAuth.instance.currentUser?.uid;
+      if (userUid == null) {
+        print("사용자 인증이 필요합니다.");
+        return false; // 인증되지 않은 경우 false 반환
+      }
+
+      // Firestore에서 사용자 데이터 가져오기
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userUid)
+          .get();
+
+      if (snapshot.exists) {
+        final data = snapshot.data();
+        return data?['doublePoint'] ?? false; // Firestore에서 값 가져오기
+      } else {
+        print("사용자 문서를 찾을 수 없습니다.");
+        return false;
+      }
+    } catch (e) {
+      print("오류 발생: $e");
+      return false;
+    }
+  }
+
   @override
   void dispose() {
     _timer.cancel(); // 카운트다운 타이머 종료
@@ -375,10 +406,18 @@ class _CountdownTextState extends State<CountdownText> {
 
   @override
   Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: doublePointFuture,
+    builder: (context, snapshot){
+        final doublePoint = snapshot.data ?? false;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween, // 좌우 정렬
       children: [
         // "남은 시간 : " 텍스트 (좌측 정렬)
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start, //왼쪽 정렬
+          children: [
         Text(
           "남은 시간 : ",
           style: TextStyle(
@@ -386,6 +425,27 @@ class _CountdownTextState extends State<CountdownText> {
             color: Colors.blue, // AppColors.textBlue로 대체 가능
             fontSize: 25,
           ),
+        ),
+        if(doublePoint==true)
+          Row(
+            children: [
+              Icon(
+                Icons.double_arrow, // 원하는 아이콘으로 변경
+                color: Colors.orange,
+                size: 20,
+              ),
+              SizedBox(width: 5), // 아이콘과 텍스트 간 간격
+            Text(
+              "포인트 2배",
+              style: TextStyle(
+                fontFamily: "DoHyeon",
+                color: Colors.black, // 텍스트 색상
+                fontSize: 18, // 텍스트 크기
+              ),
+            ),
+          ],
+        ),
+      ],
         ),
         // 시간, 분, 초 부분 (우측 정렬)
         Text(
@@ -400,8 +460,11 @@ class _CountdownTextState extends State<CountdownText> {
         // 이 부분은 NotificationIcon에서 처리합니다.
       ],
     );
+    },
+    );
   }
 }
+
 
 class CharacterImage extends StatefulWidget {
   @override
@@ -971,6 +1034,7 @@ class _HeaderSectionState extends State<HeaderSection> {
   String UID = "";
   int score = 0;
   int percent = 0;
+
 
   late StreamSubscription<DocumentSnapshot> userInfoSubscription;
   Timer? dailyUpdateTimer;

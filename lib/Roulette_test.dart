@@ -41,6 +41,7 @@ class _RouletteState extends State<Roulette> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    _fetchChangeTickets();
     _controller = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
@@ -240,6 +241,35 @@ class _RouletteState extends State<Roulette> with TickerProviderStateMixin {
     }
   }
 
+  int _changeTickets = 0;
+  Future<void> _fetchChangeTickets() async {
+    try {
+      final userUid = await _getCurrentUserUid(); // 현재 로그인된 유저의 UID 가져오기
+      if (userUid == null) {
+        print("사용자 인증이 필요합니다.");
+        return;
+      }
+
+      // Firestore에서 사용자 데이터 가져오기
+      final userDoc =
+      FirebaseFirestore.instance.collection('users').doc(userUid);
+      final snapshot = await userDoc.get();
+
+      if (snapshot.exists) {
+        final data = snapshot.data();
+        final changeTickets = data?['룰렛판 바꾸기'] ?? 0; // 티켓 개수 가져오기
+
+        setState(() {
+          _changeTickets = changeTickets; // 상태 업데이트
+        });
+      } else {
+        print("사용자 문서를 찾을 수 없습니다.");
+      }
+    } catch (e) {
+      print("오류 발생: $e");
+    }
+  }
+
   // 새로 고침 버튼 클릭 시 호출될 함수
   Future<void> refreshList() async {
     setState(() {
@@ -275,6 +305,7 @@ class _RouletteState extends State<Roulette> with TickerProviderStateMixin {
 
           // 새로 고침을 위해 새로운 데이터를 가져오기
           await _fetchChallengeItems(); // 데이터를 새로 가져오는 함수 호출
+          await _fetchChangeTickets();
         } else {
           print("룰렛판 바꾸기 아이템이 부족합니다!");
           // 챌린지 스킵권이 부족할 때 다이얼로그 띄우기
@@ -565,7 +596,7 @@ class _RouletteState extends State<Roulette> with TickerProviderStateMixin {
                           Icon(Icons.refresh, color: Colors.white), // 아이콘 추가
                           SizedBox(width: 8), // 아이콘과 텍스트 사이 간격
                           Text(
-                            "룰렛판 바꾸기 사용하기",
+                            "룰렛판 바꾸기 사용하기 (보유 수 : " + _changeTickets.toString() + " 개)",
                             style: TextStyle(fontSize: 24),
                           ),
                         ],

@@ -18,6 +18,7 @@ class ChallengeButton extends StatefulWidget {
 
 class _ChallengeButtonState extends State<ChallengeButton> {
   int flag = 1; // 기본 상태는 1 (챌린지 뽑기)
+  bool doublePoint = false;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
@@ -52,6 +53,7 @@ class _ChallengeButtonState extends State<ChallengeButton> {
         if (snapshot.exists && snapshot.data() != null) {
           setState(() {
             flag = snapshot['challengeFlag'] ?? 1; // Firebase에서 flag 값을 가져옴
+            doublePoint = snapshot['doublePoint'] ?? false;
           });
         }
       } catch (e) {
@@ -75,6 +77,24 @@ class _ChallengeButtonState extends State<ChallengeButton> {
         print("Flag updated successfully");
       } catch (e) {
         print("Failed to update flag: $e");
+      }
+    }
+  }
+
+  void _updateDoublePoint(bool doublePoint) async {
+    User? currentUser = FirebaseAuth.instance.currentUser;
+
+    if (currentUser != null) {
+      String userId = currentUser.uid;
+
+      try {
+        await _firestore.collection('users').doc(userId).set(
+          {'doublePoint': doublePoint},
+          SetOptions(merge: true),
+        );
+        print("doublePoint updated successfully");
+      } catch (e) {
+        print("Failed to update doublePoint: $e");
       }
     }
   }
@@ -146,10 +166,17 @@ class _ChallengeButtonState extends State<ChallengeButton> {
                         flag = 3; // 성공 상태로 변경
                         _updateFlag(flag); // Firebase에 flag 상태 업데이트
                       });
+                      if (doublePoint == true){ // 2배권 사용할 시에 포인트 2배 적립
+                        addPoints(2*10);
+                        doublePoint = false;
+                        _updateDoublePoint(doublePoint);
+                      }
+                      else {
+                        // 포인트 10점 추가
+                        addPoints(10);
+                        addScore(1);
+                      }
 
-                      // 포인트 10점 추가
-                      addPoints(10);
-                      addScore(1);
 
                       Navigator.push(
                         context,
@@ -203,9 +230,13 @@ class _ChallengeButtonState extends State<ChallengeButton> {
                 ),
               ],
             )
-          else // flag가 3 또는 4일 때 성공 또는 실패 메시지 표시
+          else
             Text(
-              flag == 3 ? "성공~!" : "실패ㅠ", // 조건에 따라 메시지 변경
+              flag == 3
+                  ? "성공~!"
+                  : (flag == 4
+                  ? "실패ㅠ"
+                  : ""), // flag가 5일 때 빈 문자열
               style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
             ),
         ],

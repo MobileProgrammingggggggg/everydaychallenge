@@ -206,6 +206,9 @@ class _StoreScreenState extends State<StoreScreen> {
                 cursor: SystemMouseCursors.click, // 마우스 커서 변경
                 child: GestureDetector(
                 onTap: () {
+                  if(entry.key == '룰렛판 바꾸기'){
+                    _handleRoulette(context);
+                  }
                   if(entry.key == '챌린지 스킵권'){
                     _handleSkip(context);
                   }
@@ -260,6 +263,27 @@ class _StoreScreenState extends State<StoreScreen> {
     );
   }
 
+  void _handleRoulette(BuildContext context) {
+    // 다이얼로그 띄우기
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("룰렛판 바꾸기"),
+          content: Text("룰렛을 돌릴 때 사용할 수 있습니다."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text("확인"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _handleSkip(BuildContext context) {
     // 다이얼로그 띄우기
     showDialog(
@@ -309,7 +333,7 @@ class _StoreScreenState extends State<StoreScreen> {
         if (challengeFlag == 1 || challengeFlag == 2) {
           if(skipTicket>0){
             skipTicket --;
-            challengeFlag = 3;
+            challengeFlag = 5;
             selectedChallenge = "오늘의 챌린지는 스킵되었습니다.";
             Navigator.push(
               context,
@@ -331,6 +355,9 @@ class _StoreScreenState extends State<StoreScreen> {
           else {
             _errorAlert("아이템을 보유하고 있지 않습니다.");
           }
+        }
+        else { // challengeFlag == 3 ( 성공했을 시에 )
+          _errorAlert("이미 오늘의 챌린지를 성공하셨네요!");
         }
       }
     } catch (e) {
@@ -368,51 +395,76 @@ class _StoreScreenState extends State<StoreScreen> {
 
   void _doubleLogic() async {
     try {
-      // Firestore의 'users' 컬렉션에서 해당 uid를 가진 문서를 읽어옵니다.
+      // Firestore에서 'users' 컬렉션에서 uid 문서를 가져옵니다.
       DocumentSnapshot snapshot = await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
-          .get(); // .get()을 사용하여 문서를 한 번만 읽어옵니다.
+          .get();
 
       if (snapshot.exists) {
-        // 데이터가 존재하면 'challengeFlag' 값을 확인합니다.
         Map<String, dynamic> data = snapshot.data() as Map<String, dynamic>;
 
-        // challengeFlag 값 가져오기
+        // Firestore에서 가져온 데이터
         int doubleTicket = data['포인트 2배권'];
         int challengeFlag = data['challengeFlag'];
         int points = data['points'];
+        bool checkDoubleTicket = data['checkDoubleTicket'] ?? false; // 기본값 false
+        String lastUsedDate = data['lastUsedDate'] ?? ""; // 마지막 사용 날짜
+        bool doublePoint = data['doublePoint'] ?? false;
+        doublePoint = false;
 
+        // 오늘 날짜 가져오기
+        DateTime today = DateTime.now();
+        String todayString = "${today.year}-${today.month}-${today.day}";
 
-        if (challengeFlag == 3) {
-          if(doubleTicket>0){
-            doubleTicket --;
-            points +=10;
-            _noticeAlert("오늘의 챌린지 포인트가 2배로 적립되었습니다.");
+        // 날짜가 다르면 checkDoubleTicket을 초기화
+        if (lastUsedDate != todayString) {
+          checkDoubleTicket = false;
+        }
 
-            // Firestore 문서 업데이트
-            await FirebaseFirestore.instance.collection('users').doc(uid).update({
-              '포인트 2배권' : doubleTicket,
-              'points' : points,
-            });
+        // 챌린지 로직 실행
+        if (challengeFlag == 1 || challengeFlag == 2) { // 챌린지 완료 전
+          if (doubleTicket > 0) { // 티켓 보유 시
+            if (checkDoubleTicket == false) { // 오늘 티켓 사용하지 않았을 시
+              doubleTicket--;
+              checkDoubleTicket = true;
+              points += 10;
+              _noticeAlert("오늘의 챌린지 포인트가 2배로 적립됩니다!");
+              doublePoint = true;
 
-            // 변경된 데이터를 로컬에서 사용하기 위해 setState() 호출
-            setState(() {
-              // 상태 업데이트 코드 (예: UI에 반영)
-            });
-          }
-          else {
+              // Firestore 업데이트
+              await FirebaseFirestore.instance.collection('users')
+                  .doc(uid)
+                  .update({
+                '포인트 2배권': doubleTicket,
+                'points': points,
+                'checkDoubleTicket': checkDoubleTicket,
+                'lastUsedDate': todayString, // 마지막 사용 날짜 저장
+                'doublePoint': doublePoint,
+              });
+
+              print("Firestore updated successfully");
+
+              // UI 업데이트
+              setState(() {
+                // 상태 업데이트
+              });
+            } else {
+              _errorAlert("이 아이템은 하루에 한 번만 사용할 수 있습니다.");
+            }
+          } else {
             _errorAlert("아이템을 보유하고 있지 않습니다.");
           }
+        } else {
+          _errorAlert("오늘의 챌린지를 이미 완료했습니다.");
         }
-        else {
-          _errorAlert("오늘의 챌린지를 먼저 완료해주세요.");
-        }
+
       }
     } catch (e) {
       print("Error getting user data: $e");
     }
   }
+
 
   void _handleRandom(BuildContext context) {
     // 다이얼로그 띄우기
@@ -492,46 +544,118 @@ class _StoreScreenState extends State<StoreScreen> {
   void _errorAlert(String msg){
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("오류"),
-          content: Text(msg),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text("확인"),
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: Colors.black, width: 3),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Center(
+              child: Image.asset(
+                'assets/images/failure.png',
+                height: 100,
+              ),
+            ),
+            SizedBox(height: 16),
+            Center(
+              child: Text(
+                msg,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
             ),
           ],
-        );
-      },
+        ),
+        actions: [
+          Center(
+            child: SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                style: TextButton.styleFrom(
+                  backgroundColor: Color.fromRGBO(92, 103, 227, 1),
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text(
+                  '확인',
+                  style: TextStyle(
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   void _noticeAlert(String msg){
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          content: Column(
-            mainAxisSize: MainAxisSize.min,  // 내용 크기를 최소화
-            children: [
-              Image.asset('assets/images/good.png', height: 100),
-              SizedBox(height: 10),  // 간격을 추가
-              Text(msg),
-            ],
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();  // 다이얼로그를 닫음
-              },
-              child: Text('확인'),
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: Colors.black, width: 3),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Center(
+              child: Image.asset(
+                'assets/images/good.png',
+                height: 100,
+              ),
+            ),
+            SizedBox(height: 16),
+            Center(
+              child: Text(
+                msg,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
             ),
           ],
-        );
-      },
+        ),
+        actions: [
+          Center(
+            child: SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                style: TextButton.styleFrom(
+                  backgroundColor: Color.fromRGBO(92, 103, 227, 1),
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text(
+                  '확인',
+                  style: TextStyle(
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
 
   }
@@ -614,9 +738,9 @@ class _StoreScreenState extends State<StoreScreen> {
                     ShopItem(
                       icon: Icons.double_arrow,
                       title: "포인트 2배권",
-                      points: 50,
+                      points: 5,
                       description: "오늘의 챌린지포인트를 2배 획득합니다.",
-                      onTap: () => _showPurchaseDialog(context, "포인트 2배권", 50),
+                      onTap: () => _showPurchaseDialog(context, "포인트 2배권", 5),
                     ),
                     ShopItem(
                       icon: Icons.auto_fix_high,
