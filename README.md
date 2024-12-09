@@ -58,15 +58,13 @@ Provider 또는 Riverpod: 상태 관리.
 
 GetX: 간편한 상태 관리 및 라우팅.
 
-Dio: 비동기 HTTP 요청.
-
-Hive: 로컬 데이터베이스로 사용자 정보 및 챌린지 기록 저장.
-
 Flutter Local Notifications: 알림 기능 구현.
 
 
 Backend
 
-서버리스 아키텍처: 필요에 따라 AWS Lambda 또는 기타 서버리스 서비스를 활용하여 추가적인 비즈니스 로직 처리.
+Firebase : 클라이언트와 데이터베이스 간의 데이터를 실시간으로 동기화.
+  + Firestore (Cloud Firestore) : Firebase의 최신 NoSQL 문서형 데이터베이스
+  + Authentication : 이메일, 비밀번호, 소셜 로그인을 지원하는 인증 서비스.
 
-RESTful API: 원하는 경우, 자체적인 API를 구현하여 클라이언트와 서버 간의 데이터 통신 처리.
+EmailJS : 서버리스 방식으로 클라이언트에서 이메일을 전송할 수 있도록 지원.
