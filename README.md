@@ -6,7 +6,7 @@ main.dart 파일을 실행시키면 프로그램이 실행됩니다.
 
 프로젝트 설명 및 시연 영상 https://youtu.be/Nn28v8lRLn0
 
-![매일매일매일챌린지](https://github.com/user-attachments/assets/aca152c2-9045-4741-b4cb-802c8c47b187)
+![매일매일매일매일매일챌린지](https://github.com/user-attachments/assets/be9dd874-e3d5-45ee-bf45-c9e398f83bab)
 
 📝 주요 기능
 
